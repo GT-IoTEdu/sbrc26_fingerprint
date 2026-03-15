@@ -35,7 +35,7 @@ Python version:
 Example:
 
 ```bash
-python bundle_snapshot.py runs 192.168.1.100 --seconds 60 --iface "Wi-Fi"
+sudo python3 bundle_snapshot.py runs 192.168.1.100 --seconds 60 --iface "Wi-Fi"
 ```
 
 Parameters:
