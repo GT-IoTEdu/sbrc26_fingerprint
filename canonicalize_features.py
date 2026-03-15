@@ -8,18 +8,20 @@ Lê um bundle JSON (ex.: fingerprint.json / bundle.json) e gera:
 - CANON_OBJ (objeto canônico)
 - CANON_STRING (JSON minificado, ordenado e determinístico)
 
-Política padrão: CONSERVADORA (estável)
-- Evita campos notoriamente variáveis (ex.: versões detalhadas)
-- Usa fallback quando nmap "stable fields" não aparece
-- Usa fallback via PCAP SYN (tshark) quando p0f não gera raw_sig
-
 REGRAS ATUAIS:
 - Remove MTU totalmente
 - Remove network_distance do CANON
 - Nmap é opcional
 - p0f raw_sig é preferido, mas NÃO obrigatório
-- Se não houver raw_sig, usa pcap_syn como fingerprint mínimo
-- Marca a origem do fingerprint em "fingerprint_source"
+- Se não houver raw_sig, usa pcap_syn como fallback
+- A assinatura pode incluir:
+    * p0f raw_sig
+    * pcap_syn
+    * nmap tcpip_stable_fields_raw
+    * nmap ports (com serviço e versão)
+    * nmap running
+    * nmap os_details
+    * nmap device_type
 """
 
 from __future__ import annotations
@@ -85,7 +87,7 @@ def canonicalize_nmap_ports(
     - Normaliza whitespace
     - Ordena
     - Se include_versions=False: mantém só "port/proto state service"
-    - Se include_versions=True: mantém linha completa normalizada (mais instável)
+    - Se include_versions=True: mantém linha completa normalizada
     """
     if not include_ports:
         return None
@@ -181,24 +183,25 @@ def dumps_canon(obj: Dict[str, Any]) -> str:
 def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
     """
     policy:
-      - "stable" (padrão): assinatura conservadora
-      - "rich": mais campos (ainda com limpeza), mas mais risco de variar
+      - "stable"
+      - "rich"
+
+    Nesta versão, ambos incluem os campos principais do Nmap,
+    mas "rich" fica disponível caso você queira expandir depois.
     """
     policy = (policy or "stable").lower().strip()
     if policy not in ("stable", "rich"):
         policy = "stable"
 
-    include_ports = (policy == "rich")
-    include_versions = False  # manter falso por padrão
+    # Agora queremos preservar portas + serviço + versão no canon
+    include_ports = True
+    include_versions = True
 
-    # -------- NMAP (opcional; só entra se tcpip stable existir) --------
+    # -------- NMAP --------
     nmap = bundle.get("nmap", {}) if isinstance(bundle.get("nmap"), dict) else {}
 
     tcpip_stable = stable_list(nmap.get("tcpip_stable_fields_raw", []))
     tcpip_stable = [x for x in tcpip_stable if not is_placeholder_not_captured(x)]
-
-    host_scripts = stable_list(nmap.get("host_script_results_raw", []))
-    service_info = stable_str(nmap.get("service_info"))
 
     ports_canon = canonicalize_nmap_ports(
         ports_table_raw=nmap.get("ports_table_raw", []) if isinstance(nmap.get("ports_table_raw"), list) else [],
@@ -206,19 +209,26 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
         include_versions=include_versions,
     )
 
-    mac_address = stable_str(nmap.get("mac_address"))
+    running = stable_str(nmap.get("running"))
+    os_details = stable_str(nmap.get("os_details"))
+    device_type = stable_str(nmap.get("device_type"))
 
     nmap_canon: Dict[str, Any] = {}
+
     if tcpip_stable:
         nmap_canon["tcpip_stable_fields_raw"] = tcpip_stable
 
-    if policy == "rich":
-        # Ainda opcional: só faz sentido ter esses extras se existir algum sinal do nmap no canon.
-        if nmap_canon:
-            nmap_canon["service_info"] = service_info
-            nmap_canon["host_script_results_raw"] = host_scripts or None
-            nmap_canon["ports"] = ports_canon
-            nmap_canon["mac_address"] = mac_address
+    if ports_canon:
+        nmap_canon["ports"] = ports_canon
+
+    if running:
+        nmap_canon["running"] = running
+
+    if os_details:
+        nmap_canon["os_details"] = os_details
+
+    if device_type:
+        nmap_canon["device_type"] = device_type
 
     # -------- P0F (preferido, mas não obrigatório) --------
     p0f = bundle.get("p0f", {}) if isinstance(bundle.get("p0f"), dict) else {}
@@ -233,9 +243,6 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
 
     if server_sig:
         p0f_extracted["server_synack_raw_sig_set"] = server_sig
-        rawsig_present = True
-    elif client_sig:
-        p0f_extracted["client_syn_raw_sig_set"] = client_sig
         rawsig_present = True
 
     # -------- PCAP SYN (fallback tshark) --------
@@ -266,10 +273,10 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
     if nmap_canon:
         canon["nmap"] = nmap_canon
 
-    # Se não houver nem raw_sig nem pcap_syn útil, aí sim falha
+    # Se não houver nenhuma feature útil, aí sim falha
     if not canon:
         raise ValueError(
-            "Fingerprint inválido: não foi possível obter raw_sig do p0f nem features úteis de pcap_syn."
+            "Fingerprint inválido: não foi possível obter features úteis de p0f, pcap_syn ou nmap."
         )
 
     return prune_none(canon)
@@ -283,7 +290,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("bundle_json", help="Caminho do bundle JSON (ex: fingerprint.json/bundle.json)")
     ap.add_argument("--policy", choices=["stable", "rich"], default="stable",
-                    help="stable = conservador; rich = inclui mais campos")
+                    help="stable = conservador; rich = reservado para expansão futura")
     ap.add_argument("--outdir", default=None,
                     help="Se fornecido, salva features_canon.json e features_canon.txt nesse diretório")
     args = ap.parse_args()
