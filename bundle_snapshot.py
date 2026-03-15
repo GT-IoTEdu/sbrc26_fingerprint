@@ -134,9 +134,9 @@ def parse_nmap_norm(norm_text: str):
       - ports_table_raw
       - service_info
       - network_distance
-      - tcpip_stable_fields_raw (se existir)
+      - tcpip_stable_fields_raw
       - host_script_results_raw
-      - device_type, running, os_cpe, os_details, mac_address (fallback quando stable fields não existe)
+      - device_type, running, os_cpe, os_details, mac_address
     """
     out = {
         "report_for": None,
@@ -145,8 +145,6 @@ def parse_nmap_norm(norm_text: str):
         "network_distance": None,
         "tcpip_stable_fields_raw": [],
         "host_script_results_raw": [],
-
-        # NOVOS (fallback)
         "device_type": None,
         "running": None,
         "os_cpe": None,
@@ -175,7 +173,7 @@ def parse_nmap_norm(norm_text: str):
                 continue
             out["ports_table_raw"].append(ln.rstrip())
 
-    # linhas soltas importantes (OS / MAC / distance / service info)
+    # linhas soltas importantes
     for ln in lines:
         if ln.startswith("Service Info:"):
             out["service_info"] = ln.strip()
@@ -198,10 +196,21 @@ def parse_nmap_norm(norm_text: str):
         if ln.startswith("TCP/IP fingerprint (stable fields):"):
             in_stable = True
             continue
+
         if in_stable:
-            if ln.startswith("Host script results"):
+            if (
+                ln.startswith("Host script results")
+                or ln.startswith("Device type:")
+                or ln.startswith("Running:")
+                or ln.startswith("OS details:")
+                or ln.startswith("OS CPE:")
+                or ln.startswith("Service Info:")
+                or ln.startswith("Network Distance:")
+                or ln.startswith("MAC Address:")
+            ):
                 in_stable = False
                 break
+
             if ln.strip():
                 out["tcpip_stable_fields_raw"].append(ln.rstrip())
 
@@ -212,7 +221,23 @@ def parse_nmap_norm(norm_text: str):
             in_hsr = True
             out["host_script_results_raw"].append(ln.rstrip())
             continue
+
         if in_hsr:
+            if (
+                ln.startswith("TCP/IP fingerprint (stable fields):")
+                or ln.startswith("Device type:")
+                or ln.startswith("Running:")
+                or ln.startswith("OS details:")
+                or ln.startswith("OS CPE:")
+                or ln.startswith("Service Info:")
+                or ln.startswith("Network Distance:")
+                or ln.startswith("MAC Address:")
+                or ln.startswith("PORT")
+                or ln.startswith("Nmap scan report for ")
+            ):
+                in_hsr = False
+                break
+
             out["host_script_results_raw"].append(ln.rstrip())
 
     return out
@@ -708,18 +733,8 @@ def main():
     # 6) Resumo + TIMING
     # -------------------------
     total_elapsed = time.perf_counter() - t_total0
-
-    print("\n[OK] Bundle salvo em:")
-    print(f"  {run_dir.resolve()}")
-    print("\nArquivos principais:")
-    print(f"  Nmap dir       : {nmap_dir}")
-    print(f"  PCAP           : {pcap_path}")
-    print(f"  p0f RAW        : {p0f_raw_path}")
-    print(f"  fingerprintJSON: {fp_json_path}")
-
-    if fp_hash:
-        print("\nFingerprint final (sha256 do CANON_STRING):")
-        print(f"  {fp_hash}")
+    print("\n[OK] Bundle salvo em:") 
+    print(f" {run_dir.resolve()}")
 
     print("\n=== TIMING (rodada) ===")
     for key in ["nmap", "dumpcap_capture", "nping_probe", "p0f_wsl", "p0f_native", "tshark_syn_fallback", "canon_plus_hash"]:
