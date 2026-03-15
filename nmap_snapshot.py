@@ -136,6 +136,7 @@ def extract_sf_block(raw: str) -> dict | None:
                 # stop if SF block ended
                 break
 
+
     if not sf_lines:
         return None
 
@@ -219,6 +220,7 @@ def extract_host_scripts_stable(raw: str) -> list[str]:
 # Build NORM (PC or IoT)
 # -----------------------------
 def build_norm(raw: str) -> str:
+
     target = extract_scan_report_target(raw) or "<alvo>"
     ports = extract_ports(raw)
     dist = extract_network_distance(raw)
