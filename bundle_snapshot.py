@@ -129,27 +129,27 @@ def parse_p0f_raw(p0f_text: str):
 # -------------------------
 def parse_nmap_norm(norm_text: str):
     """
-    Extrai:
+    Extrai do nmap.norm apenas os campos que devem compor a parte Nmap da assinatura:
       - report_for
       - ports_table_raw
-      - service_info
-      - network_distance
+      - device_type
+      - running
+
+    Ignora:
       - tcpip_stable_fields_raw
       - host_script_results_raw
-      - device_type, running, os_cpe, os_details, mac_address
+      - service_info
+      - network_distance
+      - mac_address
+      - application hints
+      - os_cpe
+      - os_details
     """
     out = {
         "report_for": None,
         "ports_table_raw": [],
-        "service_info": None,
-        "network_distance": None,
-        "tcpip_stable_fields_raw": [],
-        "host_script_results_raw": [],
         "device_type": None,
         "running": None,
-        "os_cpe": None,
-        "os_details": None,
-        "mac_address": None,
     }
 
     lines = norm_text.splitlines()
@@ -160,85 +160,53 @@ def parse_nmap_norm(norm_text: str):
             out["report_for"] = ln.replace("Nmap scan report for ", "").strip()
             break
 
-    # ports table
+    # bloco "Identity / platform:"
+    in_identity = False
+    for ln in lines:
+        stripped = ln.strip()
+
+        if stripped == "Identity / platform:":
+            in_identity = True
+            continue
+
+        if in_identity:
+            # fim do bloco
+            if stripped == "" or stripped.startswith("PORT"):
+                in_identity = False
+                continue
+
+            if "=" in stripped:
+                key, value = stripped.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+
+                if key == "device_type":
+                    out["device_type"] = value
+                elif key == "running":
+                    out["running"] = value
+                elif key == "os_cpe":
+                    out["os_cpe"] = value
+                elif key == "os_details":
+                    out["os_details"] = value
+
+    # tabela de portas
     in_ports = False
     for ln in lines:
         if ln.startswith("PORT"):
             in_ports = True
-            out["ports_table_raw"].append(ln.rstrip())
             continue
+
         if in_ports:
-            if ln.strip() == "":
+            stripped = ln.strip()
+
+            # fim da tabela
+            if stripped == "":
                 in_ports = False
                 continue
-            out["ports_table_raw"].append(ln.rstrip())
 
-    # linhas soltas importantes
-    for ln in lines:
-        if ln.startswith("Service Info:"):
-            out["service_info"] = ln.strip()
-        elif ln.startswith("Network Distance:"):
-            out["network_distance"] = ln.strip()
-        elif ln.startswith("Device type:"):
-            out["device_type"] = ln.strip()
-        elif ln.startswith("Running:"):
-            out["running"] = ln.strip()
-        elif ln.startswith("OS CPE:"):
-            out["os_cpe"] = ln.strip()
-        elif ln.startswith("OS details:"):
-            out["os_details"] = ln.strip()
-        elif ln.startswith("MAC Address:"):
-            out["mac_address"] = ln.strip()
-
-    # tcp/ip stable fields raw block
-    in_stable = False
-    for ln in lines:
-        if ln.startswith("TCP/IP fingerprint (stable fields):"):
-            in_stable = True
-            continue
-
-        if in_stable:
-            if (
-                ln.startswith("Host script results")
-                or ln.startswith("Device type:")
-                or ln.startswith("Running:")
-                or ln.startswith("OS details:")
-                or ln.startswith("OS CPE:")
-                or ln.startswith("Service Info:")
-                or ln.startswith("Network Distance:")
-                or ln.startswith("MAC Address:")
-            ):
-                in_stable = False
-                break
-
-            if ln.strip():
-                out["tcpip_stable_fields_raw"].append(ln.rstrip())
-
-    # host script results raw block
-    in_hsr = False
-    for ln in lines:
-        if ln.startswith("Host script results"):
-            in_hsr = True
-            out["host_script_results_raw"].append(ln.rstrip())
-            continue
-
-        if in_hsr:
-            if (
-                ln.startswith("TCP/IP fingerprint (stable fields):")
-                or ln.startswith("Device type:")
-                or ln.startswith("Running:")
-                or ln.startswith("OS details:")
-                or ln.startswith("OS CPE:")
-                or ln.startswith("Service Info:")
-                or ln.startswith("Network Distance:")
-                or ln.startswith("MAC Address:")
-                or ln.startswith("PORT")
-                or ln.startswith("Nmap scan report for ")
-            ):
-                in_hsr = False
-                break
-
-            out["host_script_results_raw"].append(ln.rstrip())
+            # guarda só linhas reais de porta
+            if re.match(r"^\d+/\w+\s+\w+\s+\S+", stripped):
+                out["ports_table_raw"].append(stripped)
 
     return out
 
