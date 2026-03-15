@@ -1,313 +1,291 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-canonicalize_features.py
-
-Lê um bundle JSON (ex.: fingerprint.json / bundle.json) e gera:
-- CANON_OBJ (objeto canônico)
-- CANON_STRING (JSON minificado, ordenado e determinístico)
-
-REGRAS ATUAIS:
-- Remove MTU totalmente
-- Remove network_distance do CANON
-- Nmap é opcional
-- p0f raw_sig é preferido, mas NÃO obrigatório
-- Se não houver raw_sig, usa pcap_syn como fallback
-- A assinatura pode incluir:
-    * p0f raw_sig
-    * pcap_syn
-    * nmap tcpip_stable_fields_raw
-    * nmap ports (com serviço e versão)
-    * nmap running
-    * nmap os_details
-    * nmap device_type
-"""
-
-from __future__ import annotations
-
-import argparse
-import json
-import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
+import subprocess
+import sys
+from pathlib import Path
+from datetime import datetime
+
 
 # -----------------------------
-# Helpers: normalização / ordenação
+# Helpers
 # -----------------------------
-
-_WS_RE = re.compile(r"\s+")
-
-
-def norm_ws(s: str) -> str:
-    """Normaliza whitespace: trim + colapsa múltiplos espaços."""
-    s = s.strip()
-    s = _WS_RE.sub(" ", s)
-    return s
-
-
-def is_nmap_ports_header(line: str) -> bool:
-    """Detecta headers típicos do Nmap em tabela de portas."""
-    t = norm_ws(line).upper()
-    if t.startswith("PORT ") and "STATE" in t and "SERVICE" in t:
-        return True
-    if t == "PORT STATE SERVICE VERSION":
-        return True
-    return False
-
-
-def parse_nmap_port_line(line: str) -> Optional[Tuple[str, str, str, str]]:
-    """
-    Parseia linha normalizada do Nmap em:
-      (port_proto, state, service, version_rest)
-    """
-    line = norm_ws(line)
-    if not line or is_nmap_ports_header(line):
-        return None
-
-    parts = line.split(" ")
-    if len(parts) < 3:
-        return None
-
-    port_proto = parts[0]
-    state = parts[1]
-    service = parts[2]
-    version_rest = " ".join(parts[3:]) if len(parts) > 3 else ""
-    return (port_proto, state, service, version_rest)
-
-
-def canonicalize_nmap_ports(
-    ports_table_raw: List[str],
-    include_ports: bool,
-    include_versions: bool,
-) -> Optional[List[str]]:
-    """
-    Retorna lista canônica de portas.
-    - Remove headers
-    - Normaliza whitespace
-    - Ordena
-    - Se include_versions=False: mantém só "port/proto state service"
-    - Se include_versions=True: mantém linha completa normalizada
-    """
-    if not include_ports:
-        return None
-
-    rows: List[str] = []
-    for raw in ports_table_raw or []:
-        if not isinstance(raw, str):
-            continue
-        if is_nmap_ports_header(raw):
-            continue
-
-        parsed = parse_nmap_port_line(raw)
-        if not parsed:
-            continue
-        port_proto, state, service, version_rest = parsed
-
-        if include_versions and version_rest:
-            rows.append(norm_ws(f"{port_proto} {state} {service} {version_rest}"))
-        else:
-            rows.append(norm_ws(f"{port_proto} {state} {service}"))
-
-    rows = sorted(set(rows))
-    return rows
-
-
-def stable_list(items: List[Any]) -> List[str]:
-    """Normaliza e ordena uma lista de strings de forma determinística."""
-    out: List[str] = []
-    for x in items or []:
-        if isinstance(x, str):
-            x2 = norm_ws(x)
-            if x2:
-                out.append(x2)
-    return sorted(set(out))
-
-
-def stable_str(x: Any) -> Optional[str]:
-    """Normaliza string (ou None)."""
-    if not isinstance(x, str):
-        return None
-    x2 = norm_ws(x)
-    return x2 if x2 else None
-
-
-def is_placeholder_not_captured(x: str) -> bool:
-    """
-    Detecta placeholders tipo "<não capturado>".
-    """
-    t = norm_ws(x).lower()
-    return (
-        ("não capturado" in t)
-        or ("nao capturado" in t)
-        or (t == "<nao capturado>")
-        or (t == "<não capturado>")
+def run_command(cmd: list[str]) -> str:
+    p = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
     )
+    return p.stdout
 
 
-def prune_none(obj: Any) -> Any:
-    """Remove chaves None e listas vazias recursivamente."""
-    if isinstance(obj, dict):
-        new = {}
-        for k, v in obj.items():
-            v2 = prune_none(v)
-            if v2 is None:
-                continue
-            if isinstance(v2, dict) and not v2:
-                continue
-            if isinstance(v2, list) and not v2:
-                continue
-            new[k] = v2
-        return new
-    if isinstance(obj, list):
-        new_list = [prune_none(v) for v in obj]
-        new_list = [v for v in new_list if v is not None]
-        return new_list
-    return obj
+def mac_oui(mac: str) -> str:
+    mac = mac.strip().lower()
+    parts = mac.split(":")
+    return ":".join(parts[:3]).upper() if len(parts) >= 3 else ""
 
 
-def dumps_canon(obj: Dict[str, Any]) -> str:
-    """
-    Serializa com:
-    - chaves ordenadas
-    - sem espaços
-    - unicode preservado
-    """
-    return json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+def extract_first(pattern: str, raw: str) -> str | None:
+    m = re.search(pattern, raw, re.MULTILINE)
+    return m.group(1).strip() if m else None
 
 
-# -----------------------------
-# Canonização por política
-# -----------------------------
+def extract_scan_report_target(raw: str) -> str | None:
+    return extract_first(r"^Nmap scan report for (.+)$", raw)
 
-def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
-    """
-    policy:
-      - "stable"
-      - "rich"
 
-    Nesta versão, a parte Nmap do CANON inclui apenas:
-      - ports
-      - device_type
-      - running
-    """
-    policy = (policy or "stable").lower().strip()
-    if policy not in ("stable", "rich"):
-        policy = "stable"
+def extract_network_distance(raw: str) -> str | None:
+    return extract_first(r"^Network Distance:\s*(.+)$", raw)
 
-    # -------- NMAP --------
-    nmap = bundle.get("nmap", {}) if isinstance(bundle.get("nmap"), dict) else {}
 
-    ports_canon = canonicalize_nmap_ports(
-        ports_table_raw=nmap.get("ports_table_raw", []) if isinstance(nmap.get("ports_table_raw"), list) else [],
-        include_ports=True,
-        include_versions=True,
+def extract_service_info(raw: str) -> str | None:
+    return extract_first(r"^Service Info:\s*(.+)$", raw)
+
+
+def extract_mac_line(raw: str) -> tuple[str | None, str | None]:
+    # Ex: MAC Address: D8:1F:12:3A:66:4D (Tuya Smart)
+    m = re.search(
+        r"^MAC Address:\s*([0-9A-Fa-f:]{17})(?:\s*\((.*?)\))?$",
+        raw,
+        re.MULTILINE
     )
+    if not m:
+        return None, None
+    mac = m.group(1).upper()
+    vendor = m.group(2).strip() if m.group(2) else None
+    return mac, vendor
 
-    device_type = stable_str(nmap.get("device_type"))
-    running = stable_str(nmap.get("running"))
 
-    nmap_canon: Dict[str, Any] = {}
+def extract_device_type(raw: str) -> str | None:
+    return extract_first(r"^Device type:\s*(.+)$", raw)
 
-    if ports_canon:
-        nmap_canon["ports"] = ports_canon
 
-    if device_type:
-        nmap_canon["device_type"] = device_type
+def extract_running(raw: str) -> str | None:
+    return extract_first(r"^Running:\s*(.+)$", raw)
 
+
+def extract_os_details(raw: str) -> str | None:
+    return extract_first(r"^OS details:\s*(.+)$", raw)
+
+
+def extract_os_cpe(raw: str) -> str | None:
+    return extract_first(r"^OS CPE:\s*(.+)$", raw)
+
+
+def extract_ports(raw: str) -> list[str]:
+    """
+    Extrai apenas as linhas da tabela de portas.
+    Exemplo:
+      8009/tcp open  http    Amazon Whisperplay DIAL REST service
+      9080/tcp open  glrpc?
+    """
+    lines = raw.splitlines()
+    out = []
+    in_table = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        if stripped.startswith("PORT") and "STATE" in stripped and "SERVICE" in stripped:
+            in_table = True
+            continue
+
+        if not in_table:
+            continue
+
+        # Fim da tabela principal
+        if (
+            stripped == ""
+            or line.startswith("MAC Address:")
+            or line.startswith("Device type:")
+            or line.startswith("Running:")
+            or line.startswith("OS CPE:")
+            or line.startswith("OS details:")
+            or line.startswith("Network Distance:")
+            or line.startswith("Service Info:")
+            or line.startswith("Host script results:")
+            or line.startswith("OS and Service detection performed.")
+            or line.startswith("Nmap done:")
+            or line.startswith("No exact")
+        ):
+            break
+
+        # Ignora linhas de scripts/banners que começam com |
+        if stripped.startswith("|") or stripped.startswith("|_"):
+            continue
+
+        if re.match(r"^\d+\/\w+\s+\w+\s+\S+", stripped):
+            out.append(stripped)
+
+    return out
+
+
+# -----------------------------
+# TCP/IP stable fields from OS:SCAN fingerprint
+# -----------------------------
+def extract_tcpip_stable_from_os_scan(raw: str) -> dict:
+    stable = {}
+
+    # Junta todas as linhas OS:
+    os_lines = []
+    for line in raw.splitlines():
+        if line.startswith("OS:"):
+            os_lines.append(line[3:].strip())
+
+    os_blob = "".join(os_lines)
+
+    if not os_blob:
+        return stable
+
+    # P= dentro do SCAN(...)
+    m = re.search(r"SCAN\([^\)]*%P=([^%)]*)", os_blob)
+    if m:
+        stable["P"] = m.group(1).strip()
+
+    def grab(name: str):
+        mm = re.search(rf"{name}\((.*?)\)", os_blob)
+        return mm.group(1).strip() if mm else None
+
+    for key in ["OPS", "WIN", "ECN", "U1", "IE"]:
+        val = grab(key)
+        if val:
+            stable[key] = val
+
+    return stable
+
+
+# -----------------------------
+# Optional application hints
+# -----------------------------
+def extract_fingerprint_strings_probe(raw: str) -> str | None:
+    """
+    Captura o primeiro probe listado em fingerprint-strings, se existir.
+    Exemplo:
+      | fingerprint-strings:
+      |   FourOhFourRequest:
+    """
+    m = re.search(r"^\|\s*fingerprint-strings:\s*$", raw, re.MULTILINE)
+    if not m:
+        return None
+
+    m2 = re.search(r"^\|\s{3}([A-Za-z0-9_-]+):\s*$", raw[m.end():], re.MULTILINE)
+    return m2.group(1) if m2 else None
+
+
+def extract_server_banner(raw: str) -> str | None:
+    """
+    Procura por 'Server: X' nas respostas capturadas pelo Nmap.
+    """
+    m = re.search(r"^\|\s+Server:\s*(.+)$", raw, re.MULTILINE)
+    return m.group(1).strip() if m else None
+
+
+# -----------------------------
+# Host scripts stable
+# -----------------------------
+def extract_host_scripts_stable(raw: str) -> list[str]:
+    lines = raw.splitlines()
+    out = []
+    in_scripts = False
+    keep_current = False
+
+    whitelist = {"smb2-security-mode"}
+
+    for line in lines:
+        if line.strip() == "Host script results:":
+            in_scripts = True
+            continue
+
+        if not in_scripts:
+            continue
+
+        if line.startswith("Nmap done:"):
+            break
+
+        m = re.match(r"^\|\s*([a-zA-Z0-9_-]+):\s*$", line)
+        if m:
+            script_name = m.group(1)
+            keep_current = script_name in whitelist
+            if keep_current:
+                out.append(f"| {script_name}:")
+            continue
+
+        if keep_current:
+            # remove campos temporais
+            if re.search(r"\bdate:\b", line, re.IGNORECASE):
+                continue
+            if re.search(r"\d{4}-\d{2}-\d{2}T", line):
+                continue
+            if line.startswith("|") or line.startswith("|_"):
+                out.append(line.rstrip())
+
+    return out
+
+
+# -----------------------------
+# Build NORM (unified)
+# -----------------------------
+def build_norm(raw: str) -> str:
+    target = extract_scan_report_target(raw) or "<alvo>"
+    ports = extract_ports(raw)
+
+    dtype = extract_device_type(raw)
+    running = extract_running(raw)
+    os_cpe = extract_os_cpe(raw)
+    osdet = extract_os_details(raw)
+
+    out = []
+    out.append(f"Nmap scan report for {target}")
+    out.append("")
+
+    out.append("Identity / platform:")
+    if dtype:
+        out.append(f"  device_type={dtype}")
     if running:
-        nmap_canon["running"] = running
+        out.append(f"  running={running}")
+    if os_cpe:
+        out.append(f"  os_cpe={os_cpe}")
+    if osdet:
+        out.append(f"  os_details={osdet}")
+    out.append("")
 
-    # -------- P0F (preferido, mas não obrigatório) --------
-    p0f = bundle.get("p0f", {}) if isinstance(bundle.get("p0f"), dict) else {}
-    extracted = p0f.get("extracted", {}) if isinstance(p0f.get("extracted"), dict) else {}
+    out.append("PORT    STATE SERVICE         VERSION")
+    out.extend(ports if ports else ["<sem portas detectadas>"])
+    out.append("")
 
-    client_sig = stable_list(extracted.get("client_syn_raw_sig_set", []))
-    server_sig = stable_list(extracted.get("server_synack_raw_sig_set", []))
-
-    p0f_extracted: Dict[str, Any] = {}
-    rawsig_present = False
-
-    if server_sig:
-        p0f_extracted["server_synack_raw_sig_set"] = server_sig
-        rawsig_present = True
-    elif client_sig:
-        p0f_extracted["client_syn_raw_sig_set"] = client_sig
-        rawsig_present = True
-
-    # -------- PCAP SYN (fallback tshark) --------
-    pcap_syn = bundle.get("pcap_syn", {}) if isinstance(bundle.get("pcap_syn"), dict) else {}
-    pcap_syn_canon = None
-
-    if pcap_syn and not pcap_syn.get("error"):
-        pcap_syn_canon = {
-            "ttl": stable_str(pcap_syn.get("ttl")),
-            "window_size": stable_str(pcap_syn.get("window_size")),
-            "mss": stable_str(pcap_syn.get("mss")),
-            "ws": stable_str(pcap_syn.get("ws")),
-            "sack_perm": stable_str(pcap_syn.get("sack_perm")),
-            "ts_present": stable_str(pcap_syn.get("ts_present")),
-            "options_order": stable_str(pcap_syn.get("options_order")),
-        }
-        pcap_syn_canon = prune_none(pcap_syn_canon)
-
-    # -------- Regras finais --------
-    canon: Dict[str, Any] = {}
-
-    if rawsig_present:
-        canon["p0f"] = {"extracted": prune_none(p0f_extracted)}
-
-    if pcap_syn_canon:
-        canon["pcap_syn"] = pcap_syn_canon
-
-    if nmap_canon:
-        canon["nmap"] = nmap_canon
-
-    if not canon:
-        raise ValueError(
-            "Fingerprint inválido: não foi possível obter features úteis de p0f, pcap_syn ou nmap."
-        )
-
-    return prune_none(canon)
-
+    return "\n".join(out).strip() + "\n"
 
 # -----------------------------
-# CLI
+# Main
 # -----------------------------
+def main():
+    if len(sys.argv) < 3:
+        print("Uso:")
+        print("  python3 nmap_snapshot.py <pasta_saida> <ip> [args do nmap...]")
+        print("Exemplo:")
+        print("  python3 nmap_snapshot.py snapshots 192.168.1.103 -T4 -sV -sC -O -Pn")
+        sys.exit(1)
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("bundle_json", help="Caminho do bundle JSON (ex: fingerprint.json/bundle.json)")
-    ap.add_argument("--policy", choices=["stable", "rich"], default="stable",
-                    help="stable = conservador; rich = reservado para expansão futura")
-    ap.add_argument("--outdir", default=None,
-                    help="Se fornecido, salva features_canon.json e features_canon.txt nesse diretório")
-    args = ap.parse_args()
+    out_dir = Path(sys.argv[1])
+    ip = sys.argv[2]
+    nmap_args = sys.argv[3:] or ["-T4", "-sV", "-sC", "-O", "-Pn"]
 
-    with open(args.bundle_json, "r", encoding="utf-8") as f:
-        bundle = json.load(f)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    canon_obj = build_canon(bundle, policy=args.policy)
-    canon_str = dumps_canon(canon_obj)
+    cmd = ["nmap"] + nmap_args + [ip]
+    raw = run_command(cmd)
+    norm = build_norm(raw)
 
-    print("\n=== CANON_OBJ ===")
-    print(json.dumps(canon_obj, ensure_ascii=False, sort_keys=True, indent=2))
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    raw_path = out_dir / f"nmap_{ip}_{ts}.raw.txt"
+    norm_path = out_dir / f"nmap_{ip}_{ts}.norm.txt"
 
-    print("\n=== CANON_STRING ===")
-    print(canon_str)
+    raw_path.write_text(raw, encoding="utf-8", errors="ignore")
+    norm_path.write_text(norm, encoding="utf-8", errors="ignore")
 
-    if args.outdir:
-        os.makedirs(args.outdir, exist_ok=True)
-        out_json = os.path.join(args.outdir, "features_canon.json")
-        out_txt = os.path.join(args.outdir, "features_canon.txt")
-        with open(out_json, "w", encoding="utf-8") as f:
-            json.dump(canon_obj, f, ensure_ascii=False, sort_keys=True, indent=2)
-        with open(out_txt, "w", encoding="utf-8") as f:
-            f.write(canon_str + "\n")
-        print(f"\n[OK] Saved:\n- {out_json}\n- {out_txt}")
-
-    return 0
+    print(f"[OK] RAW  -> {raw_path}")
+    print(f"[OK] NORM -> {norm_path}")
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
