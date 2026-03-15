@@ -186,55 +186,42 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
       - "stable"
       - "rich"
 
-    Nesta versão, ambos incluem os campos principais do Nmap,
-    mas "rich" fica disponível caso você queira expandir depois.
+    Nesta versão, a parte Nmap do CANON inclui apenas:
+      - ports
+      - device_type
+      - running
     """
     policy = (policy or "stable").lower().strip()
     if policy not in ("stable", "rich"):
         policy = "stable"
 
-    # Agora queremos preservar portas + serviço + versão no canon
-    include_ports = True
-    include_versions = True
-
     # -------- NMAP --------
     nmap = bundle.get("nmap", {}) if isinstance(bundle.get("nmap"), dict) else {}
 
-    tcpip_stable = stable_list(nmap.get("tcpip_stable_fields_raw", []))
-    tcpip_stable = [x for x in tcpip_stable if not is_placeholder_not_captured(x)]
-
     ports_canon = canonicalize_nmap_ports(
         ports_table_raw=nmap.get("ports_table_raw", []) if isinstance(nmap.get("ports_table_raw"), list) else [],
-        include_ports=include_ports,
-        include_versions=include_versions,
+        include_ports=True,
+        include_versions=True,
     )
 
-    running = stable_str(nmap.get("running"))
-    os_details = stable_str(nmap.get("os_details"))
     device_type = stable_str(nmap.get("device_type"))
+    running = stable_str(nmap.get("running"))
 
     nmap_canon: Dict[str, Any] = {}
-
-    if tcpip_stable:
-        nmap_canon["tcpip_stable_fields_raw"] = tcpip_stable
 
     if ports_canon:
         nmap_canon["ports"] = ports_canon
 
-    if running:
-        nmap_canon["running"] = running
-
-    if os_details:
-        nmap_canon["os_details"] = os_details
-
     if device_type:
         nmap_canon["device_type"] = device_type
+
+    if running:
+        nmap_canon["running"] = running
 
     # -------- P0F (preferido, mas não obrigatório) --------
     p0f = bundle.get("p0f", {}) if isinstance(bundle.get("p0f"), dict) else {}
     extracted = p0f.get("extracted", {}) if isinstance(p0f.get("extracted"), dict) else {}
 
-    # Prioriza SERVER syn+ack; se não houver, usa CLIENT syn
     client_sig = stable_list(extracted.get("client_syn_raw_sig_set", []))
     server_sig = stable_list(extracted.get("server_synack_raw_sig_set", []))
 
@@ -243,6 +230,9 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
 
     if server_sig:
         p0f_extracted["server_synack_raw_sig_set"] = server_sig
+        rawsig_present = True
+    elif client_sig:
+        p0f_extracted["client_syn_raw_sig_set"] = client_sig
         rawsig_present = True
 
     # -------- PCAP SYN (fallback tshark) --------
@@ -273,7 +263,6 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
     if nmap_canon:
         canon["nmap"] = nmap_canon
 
-    # Se não houver nenhuma feature útil, aí sim falha
     if not canon:
         raise ValueError(
             "Fingerprint inválido: não foi possível obter features úteis de p0f, pcap_syn ou nmap."
