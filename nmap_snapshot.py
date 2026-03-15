@@ -5,92 +5,139 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
+
 # -----------------------------
 # Helpers
 # -----------------------------
 def run_command(cmd: list[str]) -> str:
-    p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    p = subprocess.run(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
+    )
     return p.stdout
+
 
 def mac_oui(mac: str) -> str:
     mac = mac.strip().lower()
     parts = mac.split(":")
     return ":".join(parts[:3]).upper() if len(parts) >= 3 else ""
 
-def extract_scan_report_target(raw: str) -> str | None:
-    m = re.search(r"^Nmap scan report for (.+)$", raw, re.MULTILINE)
+
+def extract_first(pattern: str, raw: str) -> str | None:
+    m = re.search(pattern, raw, re.MULTILINE)
     return m.group(1).strip() if m else None
+
+
+def extract_scan_report_target(raw: str) -> str | None:
+    return extract_first(r"^Nmap scan report for (.+)$", raw)
+
 
 def extract_network_distance(raw: str) -> str | None:
-    m = re.search(r"^Network Distance:\s*(.+)$", raw, re.MULTILINE)
-    return m.group(1).strip() if m else None
+    return extract_first(r"^Network Distance:\s*(.+)$", raw)
+
 
 def extract_service_info(raw: str) -> str | None:
-    m = re.search(r"^Service Info:\s*(.+)$", raw, re.MULTILINE)
-    return m.group(1).strip() if m else None
+    return extract_first(r"^Service Info:\s*(.+)$", raw)
+
 
 def extract_mac_line(raw: str) -> tuple[str | None, str | None]:
     # Ex: MAC Address: D8:1F:12:3A:66:4D (Tuya Smart)
-    m = re.search(r"^MAC Address:\s*([0-9A-Fa-f:]{17})(?:\s*\((.*?)\))?$", raw, re.MULTILINE)
+    m = re.search(
+        r"^MAC Address:\s*([0-9A-Fa-f:]{17})(?:\s*\((.*?)\))?$",
+        raw,
+        re.MULTILINE
+    )
     if not m:
         return None, None
-    return m.group(1).upper(), (m.group(2).strip() if m.group(2) else None)
+    mac = m.group(1).upper()
+    vendor = m.group(2).strip() if m.group(2) else None
+    return mac, vendor
+
 
 def extract_device_type(raw: str) -> str | None:
-    m = re.search(r"^Device type:\s*(.+)$", raw, re.MULTILINE)
-    return m.group(1).strip() if m else None
+    return extract_first(r"^Device type:\s*(.+)$", raw)
+
 
 def extract_running(raw: str) -> str | None:
-    m = re.search(r"^Running:\s*(.+)$", raw, re.MULTILINE)
-    return m.group(1).strip() if m else None
+    return extract_first(r"^Running:\s*(.+)$", raw)
+
 
 def extract_os_details(raw: str) -> str | None:
-    m = re.search(r"^OS details:\s*(.+)$", raw, re.MULTILINE)
-    return m.group(1).strip() if m else None
+    return extract_first(r"^OS details:\s*(.+)$", raw)
+
+
+def extract_os_cpe(raw: str) -> str | None:
+    return extract_first(r"^OS CPE:\s*(.+)$", raw)
+
 
 def extract_ports(raw: str) -> list[str]:
+    """
+    Extrai apenas as linhas da tabela de portas.
+    Exemplo:
+      8009/tcp open  http    Amazon Whisperplay DIAL REST service
+      9080/tcp open  glrpc?
+    """
     lines = raw.splitlines()
     out = []
     in_table = False
+
     for line in lines:
-        if line.strip().startswith("PORT") and "STATE" in line and "SERVICE" in line:
+        stripped = line.strip()
+
+        if stripped.startswith("PORT") and "STATE" in stripped and "SERVICE" in stripped:
             in_table = True
             continue
-        if in_table:
-            # tabela termina quando começa outra seção
-            if line.strip() == "" or line.startswith("MAC Address:") or line.startswith("Device type:") or line.startswith("Running:") \
-               or line.startswith("OS ") or line.startswith("Network Distance:") or line.startswith("Host script results:") \
-               or line.startswith("OS and Service detection performed.") or line.startswith("Nmap done:") or line.startswith("No exact"):
-                break
 
-            if re.match(r"^\d+\/\w+\s+\w+\s+\S+", line.strip()):
-                out.append(line.rstrip())
+        if not in_table:
+            continue
+
+        # Fim da tabela principal
+        if (
+            stripped == ""
+            or line.startswith("MAC Address:")
+            or line.startswith("Device type:")
+            or line.startswith("Running:")
+            or line.startswith("OS CPE:")
+            or line.startswith("OS details:")
+            or line.startswith("Network Distance:")
+            or line.startswith("Service Info:")
+            or line.startswith("Host script results:")
+            or line.startswith("OS and Service detection performed.")
+            or line.startswith("Nmap done:")
+            or line.startswith("No exact")
+        ):
+            break
+
+        # Ignora linhas de scripts/banners que começam com |
+        if stripped.startswith("|") or stripped.startswith("|_"):
+            continue
+
+        if re.match(r"^\d+\/\w+\s+\w+\s+\S+", stripped):
+            out.append(stripped)
+
     return out
 
-def is_iot_mode(raw: str) -> bool:
-    run = extract_running(raw) or ""
-    if "lwip" in run.lower():
-        return True
-    # heurística: tuya + porta 6668
-    if re.search(r"^6668/tcp\s+open", raw, re.MULTILINE):
-        if re.search(r"\bTuya\b|\btuya\b", raw):
-            return True
-    return False
 
 # -----------------------------
-# PC-mode: TCP/IP stable fields from OS:SCAN fingerprint
+# TCP/IP stable fields from OS:SCAN fingerprint
 # -----------------------------
 def extract_tcpip_stable_from_os_scan(raw: str) -> dict:
     stable = {}
 
-    # juntar todas linhas OS:
+    # Junta todas as linhas OS:
     os_lines = []
     for line in raw.splitlines():
         if line.startswith("OS:"):
             os_lines.append(line[3:].strip())
+
     os_blob = "".join(os_lines)
 
-    # P= dentro do OS:SCAN(...) (quando existir)
+    if not os_blob:
+        return stable
+
+    # P= dentro do SCAN(...)
     m = re.search(r"SCAN\([^\)]*%P=([^%)]*)", os_blob)
     if m:
         stable["P"] = m.group(1).strip()
@@ -106,79 +153,35 @@ def extract_tcpip_stable_from_os_scan(raw: str) -> dict:
 
     return stable
 
+
 # -----------------------------
-# IoT-mode: optional SF block extraction (no hash)
+# Optional application hints
 # -----------------------------
-def extract_sf_block(raw: str) -> dict | None:
-    """
-    Extracts one SF:(Probe,LenHex,"..."); block if present.
-    Returns: {probe, len_hex, payload_escaped, prefix_escaped, suffix_escaped}
-    """
-    lines = raw.splitlines()
-    sf_lines = []
-    in_sf = False
-
-    for line in lines:
-        if line.startswith("SF:("):
-            in_sf = True
-            sf_lines.append(line)
-            if line.strip().endswith('");'):
-                break
-            continue
-
-        if in_sf:
-            if line.startswith("SF:") or line.startswith("|") or line.startswith(" "):
-                sf_lines.append(line)
-                # detect end
-                if line.strip().endswith('");'):
-                    break
-            else:
-                # stop if SF block ended
-                break
-
-
-    if not sf_lines:
-        return None
-
-    # join payload lines: remove leading "SF:" and newlines
-    joined = "\n".join(sf_lines)
-    joined = re.sub(r"^SF:", "", joined, flags=re.MULTILINE).strip()
-    joined = joined.replace("\n|", "\n").replace("\r", "")
-
-    m = re.search(r'^\(([^,]+),([0-9A-Fa-f]+),\"(.*)\"\);\s*$', joined, re.S)
-    if not m:
-        return None
-
-    probe = m.group(1).strip()
-    len_hex = m.group(2).strip().upper()
-    payload = m.group(3).replace("\nSF:", "")
-
-    prefix = payload[:160]
-    suffix = payload[-120:] if len(payload) > 120 else payload
-
-    return {
-        "probe": probe,
-        "len_hex": len_hex,
-        "prefix": prefix,
-        "suffix": suffix,
-    }
-
 def extract_fingerprint_strings_probe(raw: str) -> str | None:
     """
-    Captures which probe name appeared under fingerprint-strings (if present).
-    Example:
-    | fingerprint-strings:
-    |   HTTPOptions:
+    Captura o primeiro probe listado em fingerprint-strings, se existir.
+    Exemplo:
+      | fingerprint-strings:
+      |   FourOhFourRequest:
     """
     m = re.search(r"^\|\s*fingerprint-strings:\s*$", raw, re.MULTILINE)
     if not m:
         return None
-    # find next indented line like "|   HTTPOptions:"
+
     m2 = re.search(r"^\|\s{3}([A-Za-z0-9_-]+):\s*$", raw[m.end():], re.MULTILINE)
     return m2.group(1) if m2 else None
 
+
+def extract_server_banner(raw: str) -> str | None:
+    """
+    Procura por 'Server: X' nas respostas capturadas pelo Nmap.
+    """
+    m = re.search(r"^\|\s+Server:\s*(.+)$", raw, re.MULTILINE)
+    return m.group(1).strip() if m else None
+
+
 # -----------------------------
-# Host scripts stable (keep whitelist)
+# Host scripts stable
 # -----------------------------
 def extract_host_scripts_stable(raw: str) -> list[str]:
     lines = raw.splitlines()
@@ -192,8 +195,10 @@ def extract_host_scripts_stable(raw: str) -> list[str]:
         if line.strip() == "Host script results:":
             in_scripts = True
             continue
+
         if not in_scripts:
             continue
+
         if line.startswith("Nmap done:"):
             break
 
@@ -206,8 +211,8 @@ def extract_host_scripts_stable(raw: str) -> list[str]:
             continue
 
         if keep_current:
-            # drop any time-like fields
-            if re.search(r"\bdate:\b", line, re.IGNORECASE):  # smb2-time etc.
+            # remove campos temporais
+            if re.search(r"\bdate:\b", line, re.IGNORECASE):
                 continue
             if re.search(r"\d{4}-\d{2}-\d{2}T", line):
                 continue
@@ -216,103 +221,37 @@ def extract_host_scripts_stable(raw: str) -> list[str]:
 
     return out
 
+
 # -----------------------------
-# Build NORM (PC or IoT)
+# Build NORM (unified)
 # -----------------------------
 def build_norm(raw: str) -> str:
-
     target = extract_scan_report_target(raw) or "<alvo>"
     ports = extract_ports(raw)
-    dist = extract_network_distance(raw)
-    svc = extract_service_info(raw)
 
-    mac, mac_vendor = extract_mac_line(raw)
     dtype = extract_device_type(raw)
     running = extract_running(raw)
+    os_cpe = extract_os_cpe(raw)
     osdet = extract_os_details(raw)
 
     out = []
     out.append(f"Nmap scan report for {target}")
+    out.append("")
 
-    # PORTS
+    out.append("Identity / platform:")
+    if dtype:
+        out.append(f"  device_type={dtype}")
+    if running:
+        out.append(f"  running={running}")
+    if os_cpe:
+        out.append(f"  os_cpe={os_cpe}")
+    if osdet:
+        out.append(f"  os_details={osdet}")
+    out.append("")
+
     out.append("PORT    STATE SERVICE         VERSION")
     out.extend(ports if ports else ["<sem portas detectadas>"])
     out.append("")
-
-    if dist:
-        out.append(f"Network Distance: {dist}")
-    if svc:
-        out.append(f"Service Info: {svc}")
-    out.append("")
-
-    # Decide mode
-    if is_iot_mode(raw):
-        out.append("IOT stable fields:")
-        if mac:
-            oui = mac_oui(mac)
-            if mac_vendor:
-                out.append(f"  mac={mac} ({mac_vendor})")
-            else:
-                out.append(f"  mac={mac}")
-            if oui:
-                out.append(f"  mac_oui={oui}")
-        if dtype:
-            out.append(f"  device_type={dtype}")
-        if running:
-            out.append(f"  running={running}")
-        if osdet:
-            out.append(f"  os_details={osdet}")
-
-        # port/service guess (from port line)
-        # try to pick line for 6668 if exists
-        svc_guess = None
-        for pl in ports:
-            if pl.strip().startswith("6668/"):
-                # columns: PORT STATE SERVICE VERSION...
-                parts = pl.split()
-                if len(parts) >= 3:
-                    svc_guess = parts[2]
-                break
-        if svc_guess:
-            out.append(f"  service_guess={svc_guess}")
-        out.append("")
-
-        # Optional: SF block
-        fp_probe = extract_fingerprint_strings_probe(raw)
-        sf = extract_sf_block(raw)
-        if fp_probe or sf:
-            out.append("Application probe (optional):")
-            if fp_probe:
-                out.append(f"  fingerprint_strings_probe={fp_probe}")
-            if sf:
-                out.append(f"  sf_probe={sf['probe']}")
-                out.append(f"  sf_reply_len_hex={sf['len_hex']}")
-                out.append(f"  sf_reply_prefix={sf['prefix']}")
-                out.append(f"  sf_reply_suffix={sf['suffix']}")
-            out.append("")
-        else:
-            out.append("Application probe (optional):")
-            out.append("  <não capturado>")
-            out.append("")
-    else:
-        # PC-mode TCP/IP stable fields from OS:SCAN
-        tcpip = extract_tcpip_stable_from_os_scan(raw)
-        out.append("TCP/IP fingerprint (stable fields):")
-        if tcpip:
-            if "P" in tcpip:
-                out.append(f"  P={tcpip['P']}")
-            for k in ["OPS", "WIN", "ECN", "U1", "IE"]:
-                if k in tcpip:
-                    out.append(f"  {k}({tcpip[k]})")
-        else:
-            out.append("  <não capturado>")
-        out.append("")
-
-        scripts = extract_host_scripts_stable(raw)
-        if scripts:
-            out.append("Host script results (stable):")
-            out.extend(scripts)
-            out.append("")
 
     return "\n".join(out).strip() + "\n"
 
@@ -346,6 +285,7 @@ def main():
 
     print(f"[OK] RAW  -> {raw_path}")
     print(f"[OK] NORM -> {norm_path}")
+
 
 if __name__ == "__main__":
     main()
