@@ -8,18 +8,24 @@ import json
 import os
 import hashlib
 import time
+import socket
+import requests
+import xml.etree.ElementTree as ET
 
 # ------------------------------------------------------------
 # canonização (separada em canonicalize_features.py)
 # ------------------------------------------------------------
 try:
-    from canonicalize_features import build_canon, dumps_canon 
+    from canonicalize_features import build_canon, dumps_canon
 except Exception as e:
     build_canon = None
     dumps_canon = None
     _CANON_IMPORT_ERR = e
 else:
     _CANON_IMPORT_ERR = None
+
+
+SSDP_TIMEOUT = 2.0
 
 
 def run(cmd, check=True):
@@ -70,22 +76,20 @@ def win_to_wsl_path(path: Path) -> str:
     """
     p = path.resolve()
 
-    # Se NÃO estamos no Windows, não faz conversão nenhuma.
     if os.name != "nt":
         return str(p)
 
     drive = p.drive
     if not drive:
-        # caso raro: path sem drive no Windows
         return p.as_posix()
 
-    drive_letter = drive[0].lower()          # "C:" -> "c"
-    rest = p.as_posix().split(":", 1)[1]     # "/Users/..." (já com /)
+    drive_letter = drive[0].lower()
+    rest = p.as_posix().split(":", 1)[1]
     return f"/mnt/{drive_letter}{rest}"
 
 
 # -------------------------
-# Parse do p0f (RAW) -> lista de blocos (sem normalizar)
+# Parse do p0f (RAW)
 # -------------------------
 P0F_BLOCK_RE = re.compile(r"\.-\[\s*(.*?)\s*\]-\n\|\n(.*?)\n`----", re.S)
 
@@ -123,102 +127,9 @@ def parse_p0f_raw(p0f_text: str):
     }
 
 
-# -------------------------
-# Parse do nmap norm -> extrai campos (sem normalizar)
-# + inclui OS lines, MAC, etc (fallback quando stable fields não existe)
-# -------------------------
-def parse_nmap_norm(norm_text: str):
-    """
-    Extrai do nmap.norm apenas os campos que devem compor a parte Nmap da assinatura:
-      - report_for
-      - ports_table_raw
-      - device_type
-      - running
-
-    Ignora:
-      - tcpip_stable_fields_raw
-      - host_script_results_raw
-      - service_info
-      - network_distance
-      - mac_address
-      - application hints
-      - os_cpe
-      - os_details
-    """
-    out = {
-        "report_for": None,
-        "ports_table_raw": [],
-        "device_type": None,
-        "running": None,
-    }
-
-    lines = norm_text.splitlines()
-
-    # report_for
-    for ln in lines:
-        if ln.startswith("Nmap scan report for "):
-            out["report_for"] = ln.replace("Nmap scan report for ", "").strip()
-            break
-
-    # bloco "Identity / platform:"
-    in_identity = False
-    for ln in lines:
-        stripped = ln.strip()
-
-        if stripped == "Identity / platform:":
-            in_identity = True
-            continue
-
-        if in_identity:
-            # fim do bloco
-            if stripped == "" or stripped.startswith("PORT"):
-                in_identity = False
-                continue
-
-            if "=" in stripped:
-                key, value = stripped.split("=", 1)
-                key = key.strip()
-                value = value.strip()
-
-                if key == "device_type":
-                    out["device_type"] = value
-                elif key == "running":
-                    out["running"] = value
-                elif key == "os_cpe":
-                    out["os_cpe"] = value
-                elif key == "os_details":
-                    out["os_details"] = value
-
-    # tabela de portas
-    in_ports = False
-    for ln in lines:
-        if ln.startswith("PORT"):
-            in_ports = True
-            continue
-
-        if in_ports:
-            stripped = ln.strip()
-
-            # fim da tabela
-            if stripped == "":
-                in_ports = False
-                continue
-
-            # guarda só linhas reais de porta
-            if re.match(r"^\d+/\w+\s+\w+\s+\S+", stripped):
-                out["ports_table_raw"].append(stripped)
-
-    return out
-
-
 def extract_p0f_sets(p0f_parsed: dict, target_ip: str):
     """
     Extrai conjuntos estáveis do p0f para o IP alvo.
-
-    Importante:
-    - Quando você usa nping/nmap a partir do seu PC, o alvo geralmente aparece como SERVER
-      nos blocos (syn+ack) e (mtu). Então precisamos capturar server_raw_sig e server_mtu.
-    - Quando o alvo inicia conexões, ele aparece como CLIENT (syn) e (mtu) como client.
     """
     client_syn_sigs = set()
     client_mtus = set()
@@ -232,7 +143,6 @@ def extract_p0f_sets(p0f_parsed: dict, target_ip: str):
         header = b.get("header", "")
         fields = b.get("fields", {})
 
-        # CLIENT side (alvo como client)
         if "(syn)" in header and fields.get("client", "").startswith(f"{target_ip}/"):
             rs = fields.get("raw_sig")
             if rs:
@@ -246,7 +156,6 @@ def extract_p0f_sets(p0f_parsed: dict, target_ip: str):
             if mtu:
                 client_mtus.add(mtu)
 
-        # SERVER side (alvo como server)
         if "(syn+ack)" in header and fields.get("server", "").startswith(f"{target_ip}/"):
             rs = fields.get("raw_sig")
             if rs:
@@ -264,7 +173,6 @@ def extract_p0f_sets(p0f_parsed: dict, target_ip: str):
         "client_syn_raw_sig_set": sorted(client_syn_sigs),
         "client_mtu_set": sorted(client_mtus),
         "client_os_set": sorted(client_oses),
-
         "server_synack_raw_sig_set": sorted(server_synack_sigs),
         "server_mtu_set": sorted(server_mtus),
         "server_os_set": sorted(server_oses),
@@ -278,8 +186,11 @@ def write_text(path: Path, s: str) -> None:
 
 def write_json(path: Path, obj: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, indent=2, ensure_ascii=False, sort_keys=True),
-                    encoding="utf-8", errors="replace")
+    path.write_text(
+        json.dumps(obj, indent=2, ensure_ascii=False, sort_keys=True),
+        encoding="utf-8",
+        errors="replace",
+    )
 
 
 def fmt_secs(seconds: float) -> str:
@@ -292,30 +203,9 @@ def fmt_secs(seconds: float) -> str:
     return f"{m}m {s:05.2f}s"
 
 
-def parse_open_tcp_ports_from_nmap(nmap_parsed: dict):
-    """
-    Extrai lista de portas TCP abertas do ports_table_raw.
-    Aceita linhas tipo: "49152/tcp open  tcpwrapped"
-    """
-    open_ports = []
-    for row in nmap_parsed.get("ports_table_raw", []):
-        row = row.strip()
-        m = re.match(r"^(\d+)/tcp\s+open\b", row)
-        if m:
-            open_ports.append(int(m.group(1)))
-    # remove duplicatas mantendo ordem
-    seen = set()
-    out = []
-    for p in open_ports:
-        if p not in seen:
-            seen.add(p)
-            out.append(p)
-    return out
-
-
 def extract_tcp_syn_features_tshark(pcap_path: Path, ip: str):
     """
-    Fallback: tenta extrair features do 1º SYN+ACK do alvo (melhor para nping SYN probe).
+    Fallback: tenta extrair features do 1º SYN+ACK do alvo.
     Se não achar, tenta o 1º SYN do alvo.
     """
     feats = {
@@ -335,7 +225,6 @@ def extract_tcp_syn_features_tshark(pcap_path: Path, ip: str):
         feats["error"] = "pcap_missing_or_empty"
         return feats
 
-    # 1) SYN+ACK (alvo respondendo aos SYN probes)
     filters = [
         f"ip.src=={ip} && tcp.flags.syn==1 && tcp.flags.ack==1",
         f"ip.src=={ip} && tcp.flags.syn==1 && tcp.flags.ack==0",
@@ -360,7 +249,6 @@ def extract_tcp_syn_features_tshark(pcap_path: Path, ip: str):
         txt = decode_bytes(outb).strip()
         err = decode_bytes(errb).strip()
 
-        # log útil (mas não entra no CANON)
         if err:
             feats["tshark_stderr"] = (feats.get("tshark_stderr", "") + "\n" + err).strip()
 
@@ -382,7 +270,6 @@ def extract_tcp_syn_features_tshark(pcap_path: Path, ip: str):
             "ts_present": "1" if col(5) is not None else "0",
         }
 
-        # options order
         cmd2 = [
             "tshark", "-r", str(pcap_path),
             "-Y", dfilter,
@@ -434,34 +321,180 @@ def extract_tcp_syn_features_tshark(pcap_path: Path, ip: str):
     return feats
 
 
+# ------------------------------------------------------------
+# UPNP helpers
+# ------------------------------------------------------------
+def fetch_upnp_description(url: str):
+    try:
+        r = requests.get(url, timeout=1.5)
+        if r.status_code != 200:
+            return None
+
+        root = ET.fromstring(r.content)
+        ns = {"ns": "urn:schemas-upnp-org:device-1-0"}
+        device = root.find("ns:device", ns)
+
+        if device is not None:
+            return {
+                "friendlyName": device.findtext("ns:friendlyName", "", ns).strip() or None,
+                "manufacturer": device.findtext("ns:manufacturer", "", ns).strip() or None,
+                "modelName": device.findtext("ns:modelName", "", ns).strip() or None,
+            }
+    except Exception:
+        pass
+
+    return None
+
+
+def nmap_upnp_scan(target: str):
+    """
+    Usa Nmap UPnP focado no alvo.
+    """
+    try:
+        cmd = ["sudo", "nmap", "-sV", "-Pn", "--script", "upnp-info", target]
+        out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
+    except Exception:
+        return {}, ""
+
+    devices = {target: {}}
+
+    for line in out.splitlines():
+        line = line.strip()
+
+        if "Server:" in line:
+            devices[target]["server"] = line.split("Server:", 1)[-1].strip()
+
+        if "Manufacturer:" in line:
+            devices[target]["manufacturer"] = line.split("Manufacturer:", 1)[-1].strip()
+
+        if "Model Name:" in line:
+            devices[target]["model_name"] = line.split("Model Name:", 1)[-1].strip()
+
+        if "Name:" in line:
+            devices[target]["name"] = line.split("Name:", 1)[-1].strip()
+
+    return devices, out
+
+
+def ssdp_probe(target: str | None = None):
+    msg = "\r\n".join([
+        "M-SEARCH * HTTP/1.1",
+        "HOST:239.255.255.250:1900",
+        'MAN:"ssdp:discover"',
+        "MX:2",
+        "ST:ssdp:all",
+        "",
+        "",
+    ]).encode()
+
+    results = {}
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(SSDP_TIMEOUT)
+
+    try:
+        sock.sendto(msg, ("239.255.255.250", 1900))
+
+        while True:
+            try:
+                data, addr = sock.recvfrom(4096)
+                ip = addr[0]
+                if target and ip != target:
+                    continue
+
+                content = data.decode(errors="ignore")
+
+                loc = re.search(r"LOCATION:\s*(http://[^\r\n]+)", content, re.IGNORECASE)
+                srv = re.search(r"SERVER:\s*([^\r\n]+)", content, re.IGNORECASE)
+
+                if ip not in results:
+                    results[ip] = {"locs": set(), "srv": None}
+
+                if loc:
+                    results[ip]["locs"].add(loc.group(1).strip())
+
+                if srv:
+                    results[ip]["srv"] = srv.group(1).strip()
+
+            except socket.timeout:
+                break
+    finally:
+        sock.close()
+
+    return results
+
+
+def collect_upnp_identity(target_ip: str):
+    """
+    Retorna o bloco final que entrará em bundle['nmap'].
+    Mantém apenas:
+      - server
+      - name
+      - manufacturer
+      - model_name
+    """
+    final = {
+        "report_for": target_ip,
+        "server": None,
+        "name": None,
+        "manufacturer": None,
+        "model_name": None,
+    }
+
+    nmap_raw, nmap_stdout = nmap_upnp_scan(target_ip)
+    ssdp_raw = ssdp_probe(target_ip)
+
+    ninfo = nmap_raw.get(target_ip, {})
+    if ninfo.get("server"):
+        final["server"] = ninfo["server"]
+    if ninfo.get("name"):
+        final["name"] = ninfo["name"]
+    if ninfo.get("manufacturer"):
+        final["manufacturer"] = ninfo["manufacturer"]
+    if ninfo.get("model_name"):
+        final["model_name"] = ninfo["model_name"]
+
+    sinfo = ssdp_raw.get(target_ip)
+    if sinfo:
+        if not final["server"] and sinfo.get("srv"):
+            final["server"] = sinfo["srv"]
+
+        for url in sinfo.get("locs", []):
+            xml = fetch_upnp_description(url)
+            if not xml:
+                continue
+
+            if not final["name"] and xml.get("friendlyName"):
+                final["name"] = xml["friendlyName"]
+
+            if not final["manufacturer"] and xml.get("manufacturer"):
+                final["manufacturer"] = xml["manufacturer"]
+
+            if not final["model_name"] and xml.get("modelName"):
+                final["model_name"] = xml["modelName"]
+
+            if all([final["server"], final["name"], final["manufacturer"], final["model_name"]]):
+                break
+
+    return final, nmap_stdout
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("outroot", help="Pasta raiz de saída, ex: runs")
     ap.add_argument("ip", help="IP alvo, ex: 192.168.1.102")
     ap.add_argument("--seconds", type=int, default=60, help="Duração da captura PCAP")
-    ap.add_argument("--iface", default="Wi-Fi", help="Interface do dumpcap (nome ou índice do dumpcap -D)")
+    ap.add_argument("--iface", required=True, help="Interface do dumpcap (nome ou índice do dumpcap -D)")
     ap.add_argument("--wsl_distro", default=None, help="Nome da distro WSL (opcional). Ex: Ubuntu-22.04")
-    ap.add_argument("--nmap_args", nargs="*", default=["-T4", "-sV", "-sC", "-O", "-Pn"],
-                    help="Args do nmap (sem o IP)")
-    ap.add_argument("--dumpcap_path", default="dumpcap", help="Caminho do dumpcap.exe se não estiver no PATH")
-
-    # Default python: Windows -> python ; Linux/macOS -> python3
-    default_python = "python" if os.name == "nt" else "python3"
-    ap.add_argument("--python", default=default_python, help="python no Windows (python ou py) / no Linux (python3)")
-
+    ap.add_argument("--dumpcap_path", default="dumpcap", help="Caminho do dumpcap se não estiver no PATH")
     ap.add_argument("--canon_policy", choices=["stable", "rich"], default="stable",
                     help="Política de canonização (stable recomendado).")
-
     ap.add_argument("--probe_count", type=int, default=3,
-                    help="Quantidade de SYN probes por porta (nping).")
-    ap.add_argument("--probe_max_ports", type=int, default=10,
-                    help="Máximo de portas abertas do nmap usadas no probe.")
+                    help="Quantidade de SYN probes por porta.")
     ap.add_argument("--probe_delay", type=float, default=2.0,
                     help="Segundos de espera após iniciar dumpcap antes do probe.")
 
     args = ap.parse_args()
 
-    # TIMING: início total
     t_total0 = time.perf_counter()
     tmarks = {}
 
@@ -469,36 +502,37 @@ def main():
     run_dir = Path(args.outroot) / f"{args.ip}_{ts}"
     nmap_dir = run_dir / "nmap"
     pcap_dir = run_dir / "pcaps"
-    p0f_dir  = run_dir / "p0f"
+    p0f_dir = run_dir / "p0f"
 
     for d in (nmap_dir, pcap_dir, p0f_dir):
         d.mkdir(parents=True, exist_ok=True)
 
     # -------------------------
-    # 1) NMAP
+    # 1) NMAP / UPNP
     # -------------------------
-    print("[*] Running nmap_snapshot.py ...")
+    print("[*] Running Nmap ...")
     t0 = time.perf_counter()
-    nmap_cmd = [args.python, "nmap_snapshot.py", str(nmap_dir), args.ip] + args.nmap_args
-    nmap_out, nmap_err = run(nmap_cmd, check=False)
+
+    nmap_parsed, upnp_stdout = collect_upnp_identity(args.ip)
+
     tmarks["nmap"] = time.perf_counter() - t0
-    write_text(nmap_dir / "bundle_nmap_stdout.txt", nmap_out)
-    write_text(nmap_dir / "bundle_nmap_stderr.txt", nmap_err)
 
-    norm_files = sorted(nmap_dir.glob("nmap_*.norm.txt"))
-    nmap_norm_path = norm_files[-1] if norm_files else None
-    nmap_norm_text = ""
-    if nmap_norm_path and nmap_norm_path.exists():
-        nmap_norm_text = nmap_norm_path.read_text(encoding="utf-8", errors="replace")
-        nmap_parsed = parse_nmap_norm(nmap_norm_text)
-    else:
-        nmap_parsed = {"error": "nmap norm file not found in nmap_dir"}
+    write_text(nmap_dir / "bundle_nmap_stdout.txt", upnp_stdout)
+    write_json(nmap_dir / "bundle_nmap_identity.json", nmap_parsed)
 
-    open_ports = parse_open_tcp_ports_from_nmap(nmap_parsed)
-    if open_ports:
-        print(f"[*] Nmap open TCP ports detected: {open_ports[:args.probe_max_ports]}")
+    if any([
+        nmap_parsed.get("server"),
+        nmap_parsed.get("name"),
+        nmap_parsed.get("manufacturer"),
+        nmap_parsed.get("model_name"),
+    ]):
+        print("[*] UPnP identity detected:")
+        #print(f"    server={nmap_parsed.get('server')}")
+        #print(f"    name={nmap_parsed.get('name')}")
+        #print(f"    manufacturer={nmap_parsed.get('manufacturer')}")
+        #print(f"    model_name={nmap_parsed.get('model_name')}")
     else:
-        print("[*] Nmap did not report open TCP ports (or ports table missing).")
+        print("[*] No UPnP identity fields detected.")
 
     # -------------------------
     # 2) CAPTURA PCAP (dumpcap) + SYN probe (nping)
@@ -520,42 +554,23 @@ def main():
 
     t_probe0 = time.perf_counter()
     probe_used = False
-    probe_ports = open_ports[:max(0, args.probe_max_ports)] if open_ports else []
+    probe_ports = [80, 443, 22, 445, 139, 3389, 8080, 8443, 9100, 5357]
 
-    if probe_ports:
-        ports_csv = ",".join(str(p) for p in probe_ports)
-        print(f"[*] Probing target with nping SYN (ports={ports_csv}, count={args.probe_count}) ...")
-        nping_cmd = [
-            "nping",
-            "--tcp",
-            "-p", ports_csv,
-            "--flags", "syn",
-            "--count", str(args.probe_count),
-            args.ip
-        ]
-        np_out, np_err = run(nping_cmd, check=False)
-        write_text(run_dir / "nping_stdout.txt", np_out)
-        if np_err.strip():
-            write_text(run_dir / "nping_stderr.txt", np_err)
-        probe_used = True
-    else:
-        common = [80, 443, 22, 445, 139, 3389, 8080, 8443, 9100, 5357]
-        ports_csv = ",".join(str(p) for p in common)
-        print(f"[*] Probing common ports with nping SYN (ports={ports_csv}, count=1) ...")
-        nping_cmd = [
-            "nping",
-            "--tcp",
-            "-p", ports_csv,
-            "--flags", "syn",
-            "--count", str(args.probe_count),
-            args.ip
-        ]
-        np_out, np_err = run(nping_cmd, check=False)
-        write_text(run_dir / "nping_stdout.txt", np_out)
-        if np_err.strip():
-            write_text(run_dir / "nping_stderr.txt", np_err)
-        probe_used = True
-        probe_ports = common
+    ports_csv = ",".join(str(p) for p in probe_ports)
+    print(f"[*] Probing common ports with nping SYN (ports={ports_csv}, count={args.probe_count}) ...")
+    nping_cmd = [
+        "nping",
+        "--tcp",
+        "-p", ports_csv,
+        "--flags", "syn",
+        "--count", str(args.probe_count),
+        args.ip
+    ]
+    np_out, np_err = run(nping_cmd, check=False)
+    write_text(run_dir / "nping_stdout.txt", np_out)
+    if np_err.strip():
+        write_text(run_dir / "nping_stderr.txt", np_err)
+    probe_used = True
 
     tmarks["nping_probe"] = time.perf_counter() - t_probe0
 
@@ -643,7 +658,6 @@ def main():
         "paths": {
             "run_dir": str(run_dir.resolve()),
             "pcap_path": str(pcap_path),
-            "nmap_norm_path": str(nmap_norm_path) if nmap_norm_path else None,
             "p0f_raw_path": str(p0f_raw_path),
         },
         "nmap": nmap_parsed,
@@ -655,7 +669,7 @@ def main():
     write_json(fp_json_path, fingerprint)
 
     # -------------------------
-    # 5) Canonização + Hash 
+    # 5) Canonização + Hash
     # -------------------------
     canon_obj = None
     canon_str = None
@@ -673,8 +687,8 @@ def main():
             fp_hash = hashlib.sha256(canon_str.encode("utf-8")).hexdigest()
 
             canon_json_path = run_dir / "features_canon.json"
-            canon_txt_path  = run_dir / "features_canon.txt"
-            hash_txt_path   = run_dir / "fingerprint_sha256.txt"
+            canon_txt_path = run_dir / "features_canon.txt"
+            hash_txt_path = run_dir / "fingerprint_sha256.txt"
 
             write_json(canon_json_path, canon_obj)
             write_text(canon_txt_path, canon_str + "\n")
@@ -701,7 +715,7 @@ def main():
     # 6) Resumo + TIMING
     # -------------------------
     total_elapsed = time.perf_counter() - t_total0
-    print("\n[OK] Bundle salvo em:") 
+    print("\n[OK] Bundle salvo em:")
     print(f" {run_dir.resolve()}")
 
     print("\n=== TIMING (rodada) ===")
