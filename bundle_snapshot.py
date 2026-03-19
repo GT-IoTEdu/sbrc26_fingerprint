@@ -526,7 +526,7 @@ def main():
         nmap_parsed.get("manufacturer"),
         nmap_parsed.get("model_name"),
     ]):
-        print("[*] UPnP identity detected:")
+        print("[*] UPnP identity detected ...")
         #print(f"    server={nmap_parsed.get('server')}")
         #print(f"    name={nmap_parsed.get('name')}")
         #print(f"    manufacturer={nmap_parsed.get('manufacturer')}")
