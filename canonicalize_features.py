@@ -9,19 +9,16 @@ Lê um bundle JSON (ex.: fingerprint.json / bundle.json) e gera:
 - CANON_STRING (JSON minificado, ordenado e determinístico)
 
 REGRAS ATUAIS:
-- Remove MTU totalmente
-- Remove network_distance do CANON
-- Nmap é opcional
+- Nmap/UPnP é opcional
 - p0f raw_sig é preferido, mas NÃO obrigatório
 - Se não houver raw_sig, usa pcap_syn como fallback
 - A assinatura pode incluir:
+    * nmap.server
+    * nmap.name
+    * nmap.manufacturer
+    * nmap.model_name
     * p0f raw_sig
     * pcap_syn
-    * nmap tcpip_stable_fields_raw
-    * nmap ports (com serviço e versão)
-    * nmap running
-    * nmap os_details
-    * nmap device_type
 """
 
 from __future__ import annotations
@@ -30,7 +27,7 @@ import argparse
 import json
 import os
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 # -----------------------------
 # Helpers: normalização / ordenação
@@ -44,73 +41,6 @@ def norm_ws(s: str) -> str:
     s = s.strip()
     s = _WS_RE.sub(" ", s)
     return s
-
-
-def is_nmap_ports_header(line: str) -> bool:
-    """Detecta headers típicos do Nmap em tabela de portas."""
-    t = norm_ws(line).upper()
-    if t.startswith("PORT ") and "STATE" in t and "SERVICE" in t:
-        return True
-    if t == "PORT STATE SERVICE VERSION":
-        return True
-    return False
-
-
-def parse_nmap_port_line(line: str) -> Optional[Tuple[str, str, str, str]]:
-    """
-    Parseia linha normalizada do Nmap em:
-      (port_proto, state, service, version_rest)
-    """
-    line = norm_ws(line)
-    if not line or is_nmap_ports_header(line):
-        return None
-
-    parts = line.split(" ")
-    if len(parts) < 3:
-        return None
-
-    port_proto = parts[0]
-    state = parts[1]
-    service = parts[2]
-    version_rest = " ".join(parts[3:]) if len(parts) > 3 else ""
-    return (port_proto, state, service, version_rest)
-
-
-def canonicalize_nmap_ports(
-    ports_table_raw: List[str],
-    include_ports: bool,
-    include_versions: bool,
-) -> Optional[List[str]]:
-    """
-    Retorna lista canônica de portas.
-    - Remove headers
-    - Normaliza whitespace
-    - Ordena
-    - Se include_versions=False: mantém só "port/proto state service"
-    - Se include_versions=True: mantém linha completa normalizada
-    """
-    if not include_ports:
-        return None
-
-    rows: List[str] = []
-    for raw in ports_table_raw or []:
-        if not isinstance(raw, str):
-            continue
-        if is_nmap_ports_header(raw):
-            continue
-
-        parsed = parse_nmap_port_line(raw)
-        if not parsed:
-            continue
-        port_proto, state, service, version_rest = parsed
-
-        if include_versions and version_rest:
-            rows.append(norm_ws(f"{port_proto} {state} {service} {version_rest}"))
-        else:
-            rows.append(norm_ws(f"{port_proto} {state} {service}"))
-
-    rows = sorted(set(rows))
-    return rows
 
 
 def stable_list(items: List[Any]) -> List[str]:
@@ -132,19 +62,6 @@ def stable_str(x: Any) -> Optional[str]:
     return x2 if x2 else None
 
 
-def is_placeholder_not_captured(x: str) -> bool:
-    """
-    Detecta placeholders tipo "<não capturado>".
-    """
-    t = norm_ws(x).lower()
-    return (
-        ("não capturado" in t)
-        or ("nao capturado" in t)
-        or (t == "<nao capturado>")
-        or (t == "<não capturado>")
-    )
-
-
 def prune_none(obj: Any) -> Any:
     """Remove chaves None e listas vazias recursivamente."""
     if isinstance(obj, dict):
@@ -159,10 +76,12 @@ def prune_none(obj: Any) -> Any:
                 continue
             new[k] = v2
         return new
+
     if isinstance(obj, list):
         new_list = [prune_none(v) for v in obj]
         new_list = [v for v in new_list if v is not None]
         return new_list
+
     return obj
 
 
@@ -187,36 +106,36 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
       - "rich"
 
     Nesta versão, a parte Nmap do CANON inclui apenas:
-      - ports
-      - device_type
-      - running
+      - server
+      - name
+      - manufacturer
+      - model_name
     """
     policy = (policy or "stable").lower().strip()
     if policy not in ("stable", "rich"):
         policy = "stable"
 
-    # -------- NMAP --------
+    # -------- NMAP / UPNP --------
     nmap = bundle.get("nmap", {}) if isinstance(bundle.get("nmap"), dict) else {}
 
-    ports_canon = canonicalize_nmap_ports(
-        ports_table_raw=nmap.get("ports_table_raw", []) if isinstance(nmap.get("ports_table_raw"), list) else [],
-        include_ports=True,
-        include_versions=True,
-    )
-
-    device_type = stable_str(nmap.get("device_type"))
-    running = stable_str(nmap.get("running"))
+    server = stable_str(nmap.get("server"))
+    name = stable_str(nmap.get("name"))
+    manufacturer = stable_str(nmap.get("manufacturer"))
+    model_name = stable_str(nmap.get("model_name"))
 
     nmap_canon: Dict[str, Any] = {}
 
-    if ports_canon:
-        nmap_canon["ports"] = ports_canon
+    if server:
+        nmap_canon["server"] = server
 
-    if device_type:
-        nmap_canon["device_type"] = device_type
+    if name:
+        nmap_canon["name"] = name
 
-    if running:
-        nmap_canon["running"] = running
+    if manufacturer:
+        nmap_canon["manufacturer"] = manufacturer
+
+    if model_name:
+        nmap_canon["model_name"] = model_name
 
     # -------- P0F (preferido, mas não obrigatório) --------
     p0f = bundle.get("p0f", {}) if isinstance(bundle.get("p0f"), dict) else {}
@@ -278,10 +197,17 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("bundle_json", help="Caminho do bundle JSON (ex: fingerprint.json/bundle.json)")
-    ap.add_argument("--policy", choices=["stable", "rich"], default="stable",
-                    help="stable = conservador; rich = reservado para expansão futura")
-    ap.add_argument("--outdir", default=None,
-                    help="Se fornecido, salva features_canon.json e features_canon.txt nesse diretório")
+    ap.add_argument(
+        "--policy",
+        choices=["stable", "rich"],
+        default="stable",
+        help="stable = conservador; rich = reservado para expansão futura"
+    )
+    ap.add_argument(
+        "--outdir",
+        default=None,
+        help="Se fornecido, salva features_canon.json e features_canon.txt nesse diretório"
+    )
     args = ap.parse_args()
 
     with open(args.bundle_json, "r", encoding="utf-8") as f:
@@ -300,10 +226,13 @@ def main() -> int:
         os.makedirs(args.outdir, exist_ok=True)
         out_json = os.path.join(args.outdir, "features_canon.json")
         out_txt = os.path.join(args.outdir, "features_canon.txt")
+
         with open(out_json, "w", encoding="utf-8") as f:
             json.dump(canon_obj, f, ensure_ascii=False, sort_keys=True, indent=2)
+
         with open(out_txt, "w", encoding="utf-8") as f:
             f.write(canon_str + "\n")
+
         print(f"\n[OK] Saved:\n- {out_json}\n- {out_txt}")
 
     return 0
