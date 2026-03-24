@@ -164,9 +164,6 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
             "window_size": stable_str(pcap_syn.get("window_size")),
             "mss": stable_str(pcap_syn.get("mss")),
             "ws": stable_str(pcap_syn.get("ws")),
-            "sack_perm": stable_str(pcap_syn.get("sack_perm")),
-            "ts_present": stable_str(pcap_syn.get("ts_present")),
-            "options_order": stable_str(pcap_syn.get("options_order")),
         }
         pcap_syn_canon = prune_none(pcap_syn_canon)
 
