@@ -1,0 +1,35 @@
+2026-03-24T22:32:17 INFO [fingerprint.pipeline] === run start ip=192.168.59.105 ts=20260324_223217 mode=target canon_policy=stable log_level=DEBUG ===
+2026-03-24T22:32:17 DEBUG [fingerprint.pipeline] args seconds=60 iface=enp0s3 probe_count=3 probe_delay=2.0 wsl_distro=None dumpcap_path=dumpcap
+2026-03-24T22:32:17 INFO [fingerprint.pipeline] STAGE nmap_upnp START
+2026-03-24T22:34:01 INFO [fingerprint.pipeline] STAGE nmap_upnp END elapsed=1m 43.35s server='\\x20NRDP/2020\\.1\\.3\\.1\\r\\nConnection' name='TV do quarto' manufacturer='Xiaomi' model_name='MiTV-AESP0'
+2026-03-24T22:34:01 DEBUG [fingerprint.pipeline] nmap_upnp stdout_chars=1319
+2026-03-24T22:34:01 INFO [fingerprint.pipeline] STAGE pcap_capture START duration_s=60 filter_host=192.168.59.105
+2026-03-24T22:34:01 DEBUG [fingerprint.pipeline] dumpcap_cmd=dumpcap -i enp0s3 -w runs/192.168.59.105_20260324_223217/pcaps/capture_192.168.59.105_20260324_223217.pcap -a duration:60 -f host 192.168.59.105
+2026-03-24T22:34:03 INFO [fingerprint.pipeline] STAGE nping_probe cmd=nping --tcp -p 80,443,22,445,139,3389,8080,8443,9100,5357 --flags syn --count 3 192.168.59.105
+2026-03-24T22:34:32 DEBUG [fingerprint.pipeline] nping rc_ok stdout_chars=6758 stderr_chars=0
+2026-03-24T22:35:01 INFO [fingerprint.pipeline] STAGE pcap_capture END elapsed=1m 00.17s pcap_path=runs/192.168.59.105_20260324_223217/pcaps/capture_192.168.59.105_20260324_223217.pcap size_bytes=343672
+2026-03-24T22:35:01 INFO [fingerprint.pipeline] STAGE p0f START
+2026-03-24T22:35:01 DEBUG [fingerprint.pipeline] p0f_cmd=p0f -r /home/carregando/fullprint/runs/192.168.59.105_20260324_223217/pcaps/capture_192.168.59.105_20260324_223217.pcap
+2026-03-24T22:35:01 INFO [fingerprint.pipeline] STAGE p0f parse summary processed_packets=126 blocks_count=48 warnings=0
+2026-03-24T22:35:01 INFO [fingerprint.p0f_extract] extract_p0f_sets target=192.168.59.105 client_syn=2 server_synack=1 client_mtu=1 server_mtu=1
+2026-03-24T22:35:01 DEBUG [fingerprint.p0f_extract] extract_p0f_sets client_syn_raw_sig_set=['4:64+0:0:1460:65535,6:mss,sok,ts,nop,ws,?34,nop,nop:df,id+:0', '4:64+0:0:1460:65535,6:mss,sok,ts,nop,ws:df,id+:0']
+2026-03-24T22:35:01 DEBUG [fingerprint.p0f_extract] extract_p0f_sets server_synack_raw_sig_set=['4:64+0:0:1460:65535,0:mss:df:0']
+2026-03-24T22:35:01 INFO [fingerprint.pipeline] STAGE tshark_syn_fallback START
+2026-03-24T22:35:01 INFO [fingerprint.tshark] tshark start pcap=runs/192.168.59.105_20260324_223217/pcaps/capture_192.168.59.105_20260324_223217.pcap size_bytes=343672 ip=192.168.59.105
+2026-03-24T22:35:01 INFO [fingerprint.tshark] tshark try_filter filter=ip.src==192.168.59.105 && tcp.flags.syn==1 && tcp.flags.ack==1 matching_lines=3 first_row='64\t65535\t1460\t\t\t'
+2026-03-24T22:35:02 DEBUG [fingerprint.tshark] tshark parsed fields ttl=64 win=65535 mss=1460 ws=None opts=None
+2026-03-24T22:35:02 INFO [fingerprint.tshark] tshark done chosen_filter=ip.src==192.168.59.105 && tcp.flags.syn==1 && tcp.flags.ack==1 ttl=64 window_size=65535 mss=1460 ws=None options_order=None
+2026-03-24T22:35:02 INFO [fingerprint.pipeline] STAGE tshark_syn_fallback END elapsed=742.4 ms pcap_syn={"chosen_filter": "ip.src==192.168.59.105 && tcp.flags.syn==1 && tcp.flags.ack==1", "filters_tried": ["ip.src==192.168.59.105 && tcp.flags.syn==1 && tcp.flags.ack==1"], "mss": "1460", "options_order": null, "sack_perm": null, "source": "tshark_syn_fallback", "ts_present": "0", "tshark_stderr": "Running as user \"root\" and group \"root\". This could be dangerous.\nRunning as user \"root\" and group \"root\". This could be dangerous.", "ttl": "64", "window_size": "65535", "ws": null}
+2026-03-24T22:35:02 INFO [fingerprint.pipeline] STAGE bundle_json written path=runs/192.168.59.105_20260324_223217/fingerprint.json
+2026-03-24T22:35:02 INFO [fingerprint.pipeline] STAGE canon_hash START policy=stable
+2026-03-24T22:35:02 INFO [fingerprint.canon] build_canon start policy=stable top_level_keys=['meta', 'nmap', 'p0f', 'paths', 'pcap_syn']
+2026-03-24T22:35:02 DEBUG [fingerprint.canon] build_canon nmap_raw fields_present server=True name=True manufacturer=True model_name=True
+2026-03-24T22:35:02 INFO [fingerprint.canon] build_canon p0f branch=server_synack count=1
+2026-03-24T22:35:02 INFO [fingerprint.canon] build_canon pcap_syn included keys=['mss', 'ttl', 'window_size']
+2026-03-24T22:35:02 INFO [fingerprint.canon] build_canon result_sections=['nmap', 'p0f', 'pcap_syn']
+2026-03-24T22:35:02 DEBUG [fingerprint.canon] build_canon section nmap = {"manufacturer": "Xiaomi", "model_name": "MiTV-AESP0", "name": "TV do quarto", "server": "\\x20NRDP/2020\\.1\\.3\\.1\\r\\nConnection"}
+2026-03-24T22:35:02 DEBUG [fingerprint.canon] build_canon section p0f = {"extracted": {"server_synack_raw_sig_set": ["4:64+0:0:1460:65535,0:mss:df:0"]}}
+2026-03-24T22:35:02 DEBUG [fingerprint.canon] build_canon section pcap_syn = {"mss": "1460", "ttl": "64", "window_size": "65535"}
+2026-03-24T22:35:02 INFO [fingerprint.pipeline] STAGE canon_hash OK canon_str_len=280 sha256=bbd749aef1fb1943abb5729b1788a79e3908e7cece90877f1f23a7b93ea7b975
+2026-03-24T22:35:02 DEBUG [fingerprint.pipeline] CANON_STRING={"nmap":{"manufacturer":"Xiaomi","model_name":"MiTV-AESP0","name":"TV do quarto","server":"\\x20NRDP/2020\\.1\\.3\\.1\\r\\nConnection"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:65535,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535"}}
+2026-03-24T22:35:02 INFO [fingerprint.pipeline] === run end total=2m 44.31s tmarks={'nmap': '1m 43.35s', 'nping_probe': '29.16s', 'dumpcap_capture': '1m 00.17s', 'p0f_native': '21.1 ms', 'tshark_syn_fallback': '742.4 ms', 'canon_plus_hash': '0.4 ms'} log_file=runs/192.168.59.105_20260324_223217/fingerprint_pipeline.log ===

@@ -1,0 +1,486 @@
+{
+  "meta": {
+    "host_kind": "mobile",
+    "iface": "enp0s3",
+    "ip": "192.168.59.100",
+    "mode": "target",
+    "probe_count": 3,
+    "probe_ports": [
+      80,
+      443,
+      22,
+      445,
+      139,
+      3389,
+      8080,
+      8443,
+      9100,
+      5357
+    ],
+    "probe_used": true,
+    "seconds": 60,
+    "ts": "20260324_235242",
+    "wsl_distro": null
+  },
+  "mobile_nmap": {
+    "raw_chars": 541,
+    "service_lines": [
+      "22/tcp closed ssh",
+      "5228/tcp closed hpvroom",
+      "554/tcp closed rtsp",
+      "5555/tcp closed freeciv",
+      "62078/tcp closed iphone-sync",
+      "8080/tcp closed http-proxy",
+      "843/tcp closed unknown"
+    ]
+  },
+  "mobile_passive": {
+    "dhcp_hostname_set": [],
+    "dhcp_vendor_class_set": [],
+    "http_user_agent_set": [],
+    "mdns_name_set": [],
+    "nbns_name_set": [],
+    "tls_sni_set": [
+      "play.samsungcloud.com"
+    ]
+  },
+  "nmap": {
+    "manufacturer": null,
+    "model_name": null,
+    "name": null,
+    "report_for": "192.168.59.100",
+    "server": null
+  },
+  "p0f": {
+    "blocks": [
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/22 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/80 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/139 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/443 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/445 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/3389 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/5357 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/8080 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/8443 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/9100 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/22 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/80 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/139 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/443 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/445 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/3389 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/5357 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/8080 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/8443 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/9100 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/22 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/80 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/139 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/443 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/445 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/3389 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/5357 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/8080 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.100/33382",
+          "dist": "0",
+          "os": "Linux 2.2.x-3.x",
+          "params": "generic",
+          "raw_sig": "4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0"
+        },
+        "header": "192.168.59.100/33382 -> 57.144.179.33/443 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.100/33382",
+          "link": "Ethernet or modem",
+          "raw_mtu": "1500"
+        },
+        "header": "192.168.59.100/33382 -> 57.144.179.33/443 (mtu)"
+      },
+      {
+        "fields": {
+          "dist": "49",
+          "os": "???",
+          "params": "excess_dist",
+          "raw_sig": "4:79+?:0:1392:65535,8:mss,sok,ts,nop,ws:df:0",
+          "server": "57.144.179.33/443"
+        },
+        "header": "192.168.59.100/33382 -> 57.144.179.33/443 (syn+ack)"
+      },
+      {
+        "fields": {
+          "link": "???",
+          "raw_mtu": "1432",
+          "server": "57.144.179.33/443"
+        },
+        "header": "192.168.59.100/33382 -> 57.144.179.33/443 (mtu)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.100/33382",
+          "raw_freq": "1117.65 Hz",
+          "uptime": "29 days 6 hrs 19 min (modulo 45 days)"
+        },
+        "header": "192.168.59.100/33382 -> 57.144.179.33/443 (uptime)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/8443 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.5/5473",
+          "dist": "0",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:64+0:0:0:1480,0:::0"
+        },
+        "header": "192.168.59.5/5473 -> 192.168.59.100/9100 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.100/42812",
+          "dist": "0",
+          "os": "Linux 2.2.x-3.x",
+          "params": "generic",
+          "raw_sig": "4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0"
+        },
+        "header": "192.168.59.100/42812 -> 54.191.86.147/443 (syn)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.100/42812",
+          "link": "Ethernet or modem",
+          "raw_mtu": "1500"
+        },
+        "header": "192.168.59.100/42812 -> 54.191.86.147/443 (mtu)"
+      },
+      {
+        "fields": {
+          "dist": "13",
+          "os": "???",
+          "params": "none",
+          "raw_sig": "4:242+13:0:1452:26847,8:mss,sok,ts,nop,ws:df:0",
+          "server": "54.191.86.147/443"
+        },
+        "header": "192.168.59.100/42812 -> 54.191.86.147/443 (syn+ack)"
+      },
+      {
+        "fields": {
+          "link": "DSL",
+          "raw_mtu": "1492",
+          "server": "54.191.86.147/443"
+        },
+        "header": "192.168.59.100/42812 -> 54.191.86.147/443 (mtu)"
+      },
+      {
+        "fields": {
+          "client": "192.168.59.100/42812",
+          "raw_freq": "1004.37 Hz",
+          "uptime": "40 days 18 hrs 33 min (modulo 49 days)"
+        },
+        "header": "192.168.59.100/42812 -> 54.191.86.147/443 (uptime)"
+      }
+    ],
+    "extracted": {
+      "client_mtu_set": [
+        "1500"
+      ],
+      "client_os_set": [
+        "Linux 2.2.x-3.x"
+      ],
+      "client_syn_raw_sig_set": [
+        "4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0"
+      ],
+      "server_mtu_set": [],
+      "server_os_set": [],
+      "server_synack_raw_sig_set": []
+    },
+    "summary": {
+      "blocks_count": 40,
+      "processed_packets": 193
+    },
+    "warnings": []
+  },
+  "paths": {
+    "p0f_raw_path": "runs/192.168.59.100_20260324_235242/p0f/p0f_192.168.59.100_20260324_235242.raw.txt",
+    "pcap_path": "runs/192.168.59.100_20260324_235242/pcaps/capture_192.168.59.100_20260324_235242.pcap",
+    "run_dir": "/home/carregando/fullprint/runs/192.168.59.100_20260324_235242"
+  },
+  "pcap_syn": {
+    "chosen_filter": "ip.src==192.168.59.100 && tcp.flags.syn==1 && tcp.flags.ack==0",
+    "filters_tried": [
+      "ip.src==192.168.59.100 && tcp.flags.syn==1 && tcp.flags.ack==1",
+      "ip.src==192.168.59.100 && tcp.flags.syn==1 && tcp.flags.ack==0"
+    ],
+    "mss": "1460",
+    "options_order": null,
+    "sack_perm": "0402",
+    "source": "tshark_syn_fallback",
+    "ts_present": "1",
+    "tshark_stderr": "Running as user \"root\" and group \"root\". This could be dangerous.\nRunning as user \"root\" and group \"root\". This could be dangerous.\nRunning as user \"root\" and group \"root\". This could be dangerous.",
+    "ttl": "64",
+    "window_size": "65535",
+    "ws": "10"
+  }
+}

@@ -1,0 +1,1 @@
+{"nmap":{"manufacturer":"Xiaomi","model_name":"MiTV-AESP0","name":"TV do quarto","server":"Linux/4.9.113, UPnP/1.0, Chromecast/1.6.18"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:65535,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535"}}

@@ -1,0 +1,161 @@
+carregando@carregando-VirtualBox:~/fullprint$ sudo python3 bundle_snapshot.py runs 192.168.59.105 --seconds 60 --iface enp0s3
+[*] Running Nmap (alvo 192.168.59.105) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Xiaomi","model_name":"MiTV-AESP0","name":"TV do quarto"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:65535,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535"}}
+
+=== FINGERPRINT_HASH ===
+6397f4729927379fde73d5c1ea234ef1070d3785b4f271c562fa4cb688be2d48
+
+[OK] Saved:
+  runs/192.168.59.105_20260324_224016/features_canon.json
+  runs/192.168.59.105_20260324_224016/features_canon.txt
+  runs/192.168.59.105_20260324_224016/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/carregando/fullprint/runs/192.168.59.105_20260324_224016
+
+[OK] Log de pipeline: runs/192.168.59.105_20260324_224016/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 1m 39.35s
+dumpcap_capture   : 1m 00.19s
+nping_probe       : 29.23s
+p0f_native        : 11.3 ms
+tshark_syn_fallback: 1.16s
+canon_plus_hash   : 3.2 ms
+TOTAL             : 2m 40.74s
+carregando@carregando-VirtualBox:~/fullprint$ sudo python3 bundle_snapshot.py runs 192.168.59.105 --seconds 60 --iface enp0s3
+[sudo] senha para carregando:
+[*] Running Nmap (alvo 192.168.59.105) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Xiaomi","model_name":"MiTV-AESP0","name":"TV do quarto"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:65535,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535"}}
+
+=== FINGERPRINT_HASH ===
+6397f4729927379fde73d5c1ea234ef1070d3785b4f271c562fa4cb688be2d48
+
+[OK] Saved:
+  runs/192.168.59.105_20260324_225936/features_canon.json
+  runs/192.168.59.105_20260324_225936/features_canon.txt
+  runs/192.168.59.105_20260324_225936/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/carregando/fullprint/runs/192.168.59.105_20260324_225936
+
+[OK] Log de pipeline: runs/192.168.59.105_20260324_225936/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 1m 39.00s
+dumpcap_capture   : 1m 00.17s
+nping_probe       : 29.22s
+p0f_native        : 7.3 ms
+tshark_syn_fallback: 749.1 ms
+canon_plus_hash   : 0.6 ms
+TOTAL             : 2m 39.94s
+carregando@carregando-VirtualBox:~/fullprint$ sudo python3 bundle_snapshot.py runs 192.168.59.105 --seconds 60 --iface enp0s3
+[*] Running Nmap (alvo 192.168.59.105) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Xiaomi","model_name":"MiTV-AESP0","name":"TV do quarto"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:65535,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535"}}
+
+=== FINGERPRINT_HASH ===
+6397f4729927379fde73d5c1ea234ef1070d3785b4f271c562fa4cb688be2d48
+
+[OK] Saved:
+  runs/192.168.59.105_20260324_230426/features_canon.json
+  runs/192.168.59.105_20260324_230426/features_canon.txt
+  runs/192.168.59.105_20260324_230426/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/carregando/fullprint/runs/192.168.59.105_20260324_230426
+
+[OK] Log de pipeline: runs/192.168.59.105_20260324_230426/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 2m 09.07s
+dumpcap_capture   : 1m 00.17s
+nping_probe       : 29.25s
+p0f_native        : 8.9 ms
+tshark_syn_fallback: 703.6 ms
+canon_plus_hash   : 0.8 ms
+TOTAL             : 3m 09.97s
+carregando@carregando-VirtualBox:~/fullprint$ sudo python3 bundle_snapshot.py runs 192.168.59.105 --seconds 60 --iface enp0s3
+[*] Running Nmap (alvo 192.168.59.105) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Xiaomi","model_name":"MiTV-AESP0","name":"TV do quarto"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:65535,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535"}}
+
+=== FINGERPRINT_HASH ===
+6397f4729927379fde73d5c1ea234ef1070d3785b4f271c562fa4cb688be2d48
+
+[OK] Saved:
+  runs/192.168.59.105_20260324_231009/features_canon.json
+  runs/192.168.59.105_20260324_231009/features_canon.txt
+  runs/192.168.59.105_20260324_231009/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/carregando/fullprint/runs/192.168.59.105_20260324_231009
+
+[OK] Log de pipeline: runs/192.168.59.105_20260324_231009/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 2m 03.96s
+dumpcap_capture   : 1m 00.18s
+nping_probe       : 29.22s
+p0f_native        : 14.3 ms
+tshark_syn_fallback: 540.9 ms
+canon_plus_hash   : 1.0 ms
+TOTAL             : 3m 04.72s
+carregando@carregando-VirtualBox:~/fullprint$ sudo python3 bundle_snapshot.py runs 192.168.59.105 --seconds 60 --iface enp0s3
+[*] Running Nmap (alvo 192.168.59.105) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Xiaomi","model_name":"MiTV-AESP0","name":"TV do quarto"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:65535,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535"}}
+
+=== FINGERPRINT_HASH ===
+6397f4729927379fde73d5c1ea234ef1070d3785b4f271c562fa4cb688be2d48
+
+[OK] Saved:
+  runs/192.168.59.105_20260324_231320/features_canon.json
+  runs/192.168.59.105_20260324_231320/features_canon.txt
+  runs/192.168.59.105_20260324_231320/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/carregando/fullprint/runs/192.168.59.105_20260324_231320
+
+[OK] Log de pipeline: runs/192.168.59.105_20260324_231320/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 2m 07.81s
+dumpcap_capture   : 1m 00.13s
+nping_probe       : 29.16s
+p0f_native        : 16.5 ms
+tshark_syn_fallback: 723.5 ms
+canon_plus_hash   : 3.9 ms
+TOTAL             : 3m 08.70s

@@ -1,0 +1,31 @@
+{
+  "mobile_nmap": {
+    "service_lines": [
+      "22/tcp closed ssh",
+      "5228/tcp closed hpvroom",
+      "554/tcp closed rtsp",
+      "5555/tcp closed freeciv",
+      "62078/tcp closed iphone-sync",
+      "8080/tcp closed http-proxy",
+      "843/tcp closed unknown"
+    ]
+  },
+  "mobile_passive": {
+    "tls_sni": [
+      "play.samsungcloud.com"
+    ]
+  },
+  "p0f": {
+    "extracted": {
+      "client_syn_raw_sig_set": [
+        "4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0"
+      ]
+    }
+  },
+  "pcap_syn": {
+    "mss": "1460",
+    "ttl": "64",
+    "window_size": "65535",
+    "ws": "10"
+  }
+}

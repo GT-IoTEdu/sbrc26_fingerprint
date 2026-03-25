@@ -12,22 +12,20 @@ REGRAS ATUAIS:
 - Nmap/UPnP é opcional
 - p0f raw_sig é preferido, mas NÃO obrigatório
 - Se não houver raw_sig, usa pcap_syn como fallback
-- A assinatura pode incluir:
-    * nmap.server
-    * nmap.name
-    * nmap.manufacturer
-    * nmap.model_name
-    * p0f raw_sig
-    * pcap_syn
+- host_kind iot: nmap (manufacturer + model_name em stable); p0f (SYN+ACK preferido); pcap_syn (ttl, window, mss, ws)
+- host_kind mobile (não-IoT): apenas p0f com client_syn_raw_sig_set e pcap_syn (mss, sack_perm, ts_present, ttl, window_size, ws)
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import re
 from typing import Any, Dict, List, Optional
+
+_LOG = logging.getLogger("fingerprint.canon")
 
 # -----------------------------
 # Helpers: normalização / ordenação
@@ -55,10 +53,20 @@ def stable_list(items: List[Any]) -> List[str]:
 
 
 def stable_str(x: Any) -> Optional[str]:
-    """Normaliza string (ou None)."""
-    if not isinstance(x, str):
+    """Normaliza string (ou None). Aceita int/bool para campos numéricos do tshark."""
+    if x is None:
         return None
-    x2 = norm_ws(x)
+    if isinstance(x, bool):
+        s = "1" if x else "0"
+    elif isinstance(x, int):
+        s = str(x)
+    elif isinstance(x, float):
+        s = str(x)
+    elif isinstance(x, str):
+        s = x
+    else:
+        return None
+    x2 = norm_ws(s)
     return x2 if x2 else None
 
 
@@ -95,6 +103,16 @@ def dumps_canon(obj: Dict[str, Any]) -> str:
     return json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
+def _resolve_host_kind(bundle: Dict[str, Any], nmap: Dict[str, Any]) -> str:
+    meta = bundle.get("meta") if isinstance(bundle.get("meta"), dict) else {}
+    hk = meta.get("host_kind")
+    if hk in ("iot", "mobile"):
+        return hk
+    m = stable_str(nmap.get("manufacturer"))
+    mo = stable_str(nmap.get("model_name"))
+    return "iot" if (m or mo) else "mobile"
+
+
 # -----------------------------
 # Canonização por política
 # -----------------------------
@@ -102,40 +120,50 @@ def dumps_canon(obj: Dict[str, Any]) -> str:
 def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
     """
     policy:
-      - "stable"
-      - "rich"
-
-    Nesta versão, a parte Nmap do CANON inclui apenas:
-      - server
-      - name
-      - manufacturer
-      - model_name
+      - "stable" / "rich": nmap extras só em iot (rich); mobile ignora mobile_passive/mobile_nmap no hash
+      - iot: nmap + p0f + pcap_syn reduzido; mobile: só p0f client_syn + pcap_syn estendido
     """
     policy = (policy or "stable").lower().strip()
     if policy not in ("stable", "rich"):
         policy = "stable"
 
-    # -------- NMAP / UPNP --------
     nmap = bundle.get("nmap", {}) if isinstance(bundle.get("nmap"), dict) else {}
+    host_kind = _resolve_host_kind(bundle, nmap)
 
-    server = stable_str(nmap.get("server"))
-    name = stable_str(nmap.get("name"))
-    manufacturer = stable_str(nmap.get("manufacturer"))
-    model_name = stable_str(nmap.get("model_name"))
+    _LOG.info(
+        "build_canon start policy=%s host_kind=%s top_level_keys=%s",
+        policy,
+        host_kind,
+        sorted(bundle.keys()) if isinstance(bundle, dict) else type(bundle).__name__,
+    )
 
     nmap_canon: Dict[str, Any] = {}
 
-    if server:
-        nmap_canon["server"] = server
+    if host_kind == "iot":
+        server = stable_str(nmap.get("server"))
+        name = stable_str(nmap.get("name"))
+        manufacturer = stable_str(nmap.get("manufacturer"))
+        model_name = stable_str(nmap.get("model_name"))
 
-    if name:
-        nmap_canon["name"] = name
+        if policy == "rich" and server:
+            nmap_canon["server"] = server
 
-    if manufacturer:
-        nmap_canon["manufacturer"] = manufacturer
+        if policy == "rich" and name:
+            nmap_canon["name"] = name
 
-    if model_name:
-        nmap_canon["model_name"] = model_name
+        if manufacturer:
+            nmap_canon["manufacturer"] = manufacturer
+
+        if model_name:
+            nmap_canon["model_name"] = model_name
+
+        _LOG.debug(
+            "build_canon iot nmap fields_present server=%s name=%s mfg=%s model=%s",
+            server is not None,
+            name is not None,
+            manufacturer is not None,
+            model_name is not None,
+        )
 
     # -------- P0F (preferido, mas não obrigatório) --------
     p0f = bundle.get("p0f", {}) if isinstance(bundle.get("p0f"), dict) else {}
@@ -147,28 +175,71 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
     p0f_extracted: Dict[str, Any] = {}
     rawsig_present = False
 
-    if server_sig:
-        p0f_extracted["server_synack_raw_sig_set"] = server_sig
-        rawsig_present = True
-    elif client_sig:
-        p0f_extracted["client_syn_raw_sig_set"] = client_sig
-        rawsig_present = True
+    if host_kind == "mobile":
+        if client_sig:
+            p0f_extracted["client_syn_raw_sig_set"] = client_sig
+            rawsig_present = True
+            _LOG.info("build_canon mobile p0f client_syn count=%s", len(client_sig))
+        else:
+            _LOG.info("build_canon mobile p0f omitido (sem client_syn_raw_sig_set)")
+    else:
+        if server_sig:
+            p0f_extracted["server_synack_raw_sig_set"] = server_sig
+            rawsig_present = True
+            _LOG.info(
+                "build_canon p0f branch=server_synack count=%s",
+                len(server_sig),
+            )
+        elif client_sig:
+            p0f_extracted["client_syn_raw_sig_set"] = client_sig
+            rawsig_present = True
+            _LOG.info(
+                "build_canon p0f branch=client_syn (no server_synack) count=%s",
+                len(client_sig),
+            )
+        else:
+            _LOG.info("build_canon p0f branch=none (no raw_sig sets)")
 
     # -------- PCAP SYN (fallback tshark) --------
     pcap_syn = bundle.get("pcap_syn", {}) if isinstance(bundle.get("pcap_syn"), dict) else {}
     pcap_syn_canon = None
 
     if pcap_syn and not pcap_syn.get("error"):
-        pcap_syn_canon = {
-            "ttl": stable_str(pcap_syn.get("ttl")),
-            "window_size": stable_str(pcap_syn.get("window_size")),
-            "mss": stable_str(pcap_syn.get("mss")),
-            "ws": stable_str(pcap_syn.get("ws")),
-        }
-        pcap_syn_canon = prune_none(pcap_syn_canon)
+        if host_kind == "mobile":
+            pcap_syn_canon = prune_none(
+                {
+                    "mss": stable_str(pcap_syn.get("mss")),
+                    "sack_perm": stable_str(pcap_syn.get("sack_perm")),
+                    "ts_present": stable_str(pcap_syn.get("ts_present")),
+                    "ttl": stable_str(pcap_syn.get("ttl")),
+                    "window_size": stable_str(pcap_syn.get("window_size")),
+                    "ws": stable_str(pcap_syn.get("ws")),
+                }
+            )
+        else:
+            pcap_syn_canon = prune_none(
+                {
+                    "ttl": stable_str(pcap_syn.get("ttl")),
+                    "window_size": stable_str(pcap_syn.get("window_size")),
+                    "mss": stable_str(pcap_syn.get("mss")),
+                    "ws": stable_str(pcap_syn.get("ws")),
+                }
+            )
+        _LOG.info(
+            "build_canon pcap_syn host_kind=%s keys=%s",
+            host_kind,
+            sorted(pcap_syn_canon.keys()) if pcap_syn_canon else [],
+        )
+    else:
+        err = pcap_syn.get("error") if isinstance(pcap_syn, dict) else None
+        _LOG.info("build_canon pcap_syn skipped error=%s", err)
 
     # -------- Regras finais --------
     canon: Dict[str, Any] = {}
+
+    if host_kind != "mobile":
+        if nmap_canon:
+            canon["nmap"] = nmap_canon
 
     if rawsig_present:
         canon["p0f"] = {"extracted": prune_none(p0f_extracted)}
@@ -176,8 +247,13 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
     if pcap_syn_canon:
         canon["pcap_syn"] = pcap_syn_canon
 
-    if nmap_canon:
-        canon["nmap"] = nmap_canon
+    _LOG.info(
+        "build_canon result_sections=%s",
+        sorted(canon.keys()),
+    )
+    if _LOG.isEnabledFor(logging.DEBUG):
+        for sec, payload in sorted(canon.items()):
+            _LOG.debug("build_canon section %s = %s", sec, json.dumps(payload, ensure_ascii=False, sort_keys=True))
 
     if not canon:
         raise ValueError(
