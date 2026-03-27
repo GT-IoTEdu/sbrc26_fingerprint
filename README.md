@@ -73,14 +73,8 @@ sudo apt install -y nmap wireshark-common tshark p0f python3 python3-pip python3
 
   Many workflows still run the main script with `sudo` because **Nmap UPnP** invokes `sudo nmap` internally.
 
-### 4. Windows
 
-- Install [Npcap](https://npcap.com/) or WinPcap for capture.
-- Install **Wireshark** (includes **dumpcap** and **tshark**).
-- Install **Nmap** for Windows (includes **nping** where available).
-- **p0f**: the script can run **p0f via WSL** (`--wsl_distro` optional). Install p0f inside WSL and ensure PCAP paths are reachable.
-
-### 5. Verify tools
+### 4. Verify tools
 
 ```bash
 nmap --version
@@ -95,54 +89,8 @@ python3 -c "import requests; print('ok')"
 
 ## Execution
 
-Run from the repository directory (or ensure `canonicalize_features.py` sits next to `iot_id_fingerprint.py`).
+Run from the repository.
 
-### Single target (default mode)
-
-```bash
-sudo python3 iot_id_fingerprint.py runs 192.168.1.100 --seconds 60 --iface "Wi-Fi"
-```
-
-Arguments:
-
-| Argument | Description |
-|----------|-------------|
-| `runs` | Output root directory (created if needed) |
-| `192.168.1.100` | Target IP |
-| `--seconds` | PCAP duration in seconds |
-| `--iface` | Capture interface name or `dumpcap -D` index |
-| `--canon_policy` | `stable` (default) or `rich` — controls extra fields in the canonical JSON before hashing |
-| `--mode` | `target` (default) or `network` — SSDP discovery then fingerprint each host |
-| `--log-console` | Mirror logs to stderr |
-| `--wsl_distro` | Windows only: WSL distro name for p0f |
-
-List interfaces:
-
-```bash
-dumpcap -D
-```
-
-### Network mode (SSDP discovery)
-
-```bash
-sudo python3 iot_id_fingerprint.py runs --mode network --seconds 60 --iface eth0
-```
-
-Produces `runs/scan_<timestamp>/` with per-host folders and `scan_summary.json`.
-
-### Recompute hash from an existing bundle
-
-```bash
-python3 fingerprint_hash.py runs/192.168.1.100_20250101_120000/fingerprint.json --policy stable
-```
-
-### Canonicalize only (CLI)
-
-```bash
-python3 canonicalize_features.py runs/.../fingerprint.json --policy stable
-```
-
----
 
 ## Usage (quick reference)
 
@@ -153,7 +101,7 @@ sudo python3 iot_id_fingerprint.py runs 192.168.1.100 --seconds 60 --iface "Wi-F
 Parameters:
 
 - `runs` → output directory  
-- `target IP` → device to fingerprint (omit in `--mode network`)  
+- `target IP` → device to fingerprint 
 - `seconds` → capture duration  
 - `iface` → network interface  
 
@@ -169,6 +117,55 @@ The tool generates:
 - `fingerprint_sha256.txt` (hex digest)
 - `fingerprint_pipeline.log` (per-run logging when using the main script)
 
-## Research Context
+## Utils
 
-This tool is being developed as part of the **IoTEdu project**, aiming to explore techniques for identifying IoT devices through network fingerprinting.
+### Finding the capture interface
+
+
+```bash
+dumpcap -D
+```
+
+Each line is numbered; the name is the token after the first dot (e.g. `eth0`, `wlan0`, `enp0s3`).
+
+ you can see which interface carries the default route:
+
+```bash
+ip route get 8.8.8.8
+```
+
+### Network inventory (`iot_scanner.py`)
+
+
+```bash
+python3 iot_scanner.py                    # whole network
+```
+
+**Note:** MAC addresses are read from `ip neighbor` on Linux; on other systems they may show as `Unknown`. Some Nmap UPnP modes may need appropriate privileges.
+
+Example output:
+
+```
+[*] Iniciando Scanner de Rede...
+    (Rede completa)  
+
+=================================================================
+INVENTÁRIO DE DISPOSITIVOS
+=================================================================
+IP: 192.168.59.1 | MAC: 0A:00:27:00:00:17
+   Manufacturer: MyPublicWiFi - Your Login
+   Model Name: Unknown
+--------------------------------------------------
+IP: 192.168.59.2 | MAC: 08:00:27:6F:8B:95
+   Nome: _gateway
+   Manufacturer: pfSense - Login
+   Model Name: Unknown
+--------------------------------------------------
+IP: 192.168.59.106 | MAC: D0:76:02:F5:81:9C
+   Nome: Android
+   Manufacturer: TCL
+   Model Name: Smart TV Pro
+   UDN: uuid:ff3e3ffd-7577-497c-bbbb-bffc6fe2feff
+   SERVER: UPnP/1.0, DLNADOC/1.50 Platinum/1.0.5.13
+--------------------------------------------------
+```
