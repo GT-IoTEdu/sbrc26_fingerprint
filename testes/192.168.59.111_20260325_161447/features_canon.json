@@ -1,0 +1,18 @@
+{
+  "nmap": {
+    "manufacturer": "Samsung Electronics",
+    "model_name": "UN32J4303"
+  },
+  "p0f": {
+    "extracted": {
+      "server_synack_raw_sig_set": [
+        "4:64+0:0:1460:mss*10,0:mss:df:0"
+      ]
+    }
+  },
+  "pcap_syn": {
+    "mss": "1460",
+    "ttl": "64",
+    "window_size": "14600"
+  }
+}

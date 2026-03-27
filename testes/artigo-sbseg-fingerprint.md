@@ -1,7 +1,7 @@
 # Fingerprint determinístico de dispositivos em LAN
 
 **Rascunho para submissão / relatório técnico (formato inspirado em veículos como SBSeg)**  
-**Projeto:** ferramenta de fingerprinting IoT e hosts móveis em ambiente de laboratório (`bundle_snapshot`, canonização, SHA-256).
+**Projeto:** ferramenta de fingerprinting IoT e hosts móveis em ambiente de laboratório (`iot_id_fingerprint`, canonização, SHA-256).
 
 ---
 
@@ -31,7 +31,7 @@ Objetivos do trabalho:
 
 | Componente | Função |
 |------------|--------|
-| `bundle_snapshot.py` | Orquestra Nmap UPnP+SSDP, captura `dumpcap`, `nping`, `p0f`, `tshark`; grava `fingerprint.json`, PCAP, logs. |
+| `iot_id_fingerprint.py` | Orquestra Nmap UPnP+SSDP, captura `dumpcap`, `nping`, `p0f`, `tshark`; grava `fingerprint.json`, PCAP, logs. |
 | `canonicalize_features.py` | Constrói `CANON_OBJ` → `CANON_STRING` (JSON minificado, `sort_keys=True`). |
 | `fingerprint_hash.py` | Recalcula hash a partir de um bundle existente (reprodutibilidade). |
 
@@ -169,7 +169,7 @@ A solução final combina **colheita rica** (JSON) com **canonização conservad
 
 ## Referências de implementação (repositório)
 
-- `bundle_snapshot.py` — orquestração, SSDP ordenado, mobile passivo, `nmap` móvel, `infer_host_kind`.
+- `iot_id_fingerprint.py` — orquestração, SSDP ordenado, mobile passivo, `nmap` móvel, `infer_host_kind`.
 - `canonicalize_features.py` — `build_canon`, políticas `stable`/`rich`, ramos `iot`/`mobile`.
 - `fingerprint_hash.py` — hash offline.
 - `estudo-variaveis-imutaveis-smarttv.md` — notas sobre campos estáveis em TVs (evoluídas para política unificada).

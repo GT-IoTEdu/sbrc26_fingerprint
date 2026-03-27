@@ -1,6 +1,6 @@
 # Estudo: variáveis estáveis no fingerprint de Smart TVs
 
-Documento de apoio ao pipeline `bundle_snapshot.py` + `canonicalize_features.py` (política **`stable`**).  
+Documento de apoio ao pipeline `iot_id_fingerprint.py` + `canonicalize_features.py` (política **`stable`**).  
 Exemplo ancorado numa corrida real contra **TCL Smart TV Pro** (`192.168.59.106`, `20260324_220537`).
 
 **Política `stable` (única, qualquer IP):** não é necessário indicar tipo de dispositivo. O canónico `nmap` usa só **`manufacturer`** e **`model_name`** (não entram `server` nem `name`), para ser aplicável a TVs, telemóveis, routers, etc. Para estudo com banners/nomes completos, usar **`--canon_policy rich`**.

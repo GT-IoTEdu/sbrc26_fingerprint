@@ -1,0 +1,4 @@
+Capturing on 'enp0s3'
+File: runs/192.168.59.111_20260325_162005/pcaps/capture_192.168.59.111_20260325_162005.pcap
+Packets: 2 Packets: 4 Packets: 6 Packets: 10 Packets: 12 Packets: 13 Packets: 14 Packets: 18 Packets: 20 Packets: 23 Packets: 25 Packets: 27 Packets: 29 Packets: 31 Packets: 35 Packets: 37 Packets: 39 Packets: 43 Packets: 45 Packets: 47 Packets: 52 Packets: 54 Packets: 56 Packets: 58 Packets: 60 Packets: 62 Packets: 64 Packets: 68 Packets: 70 Packets: 72 Packets: 76 Packets: 79 Packets: 81 Packets: 85 Packets: 87 Packets: 89 Packets: 91 Packets: 93 Packets: 95 Packets: 97 Packets: 99 Packets: 106 Packets: 118 Packets: 125 Packets: 127 Packets: 129 Packets captured: 129
+Packets received/dropped on interface 'enp0s3': 129/0 (pcap:0/dumpcap:0/flushed:0/ps_ifdrop:0) (100.0%)

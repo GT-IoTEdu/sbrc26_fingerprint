@@ -1,0 +1,56 @@
+2026-03-25T16:30:13 INFO [fingerprint.pipeline] === run start ip=192.168.59.3 ts=20260325_163013 mode=target canon_policy=stable log_level=DEBUG ===
+2026-03-25T16:30:13 DEBUG [fingerprint.pipeline] args seconds=60 iface=enp0s3 probe_count=3 probe_delay=2.0 wsl_distro=None dumpcap_path=dumpcap
+2026-03-25T16:30:13 INFO [fingerprint.pipeline] STAGE nmap_upnp START
+2026-03-25T16:30:39 INFO [fingerprint.pipeline] STAGE nmap_upnp END elapsed=26.20s server=None name=None manufacturer=None model_name=None
+2026-03-25T16:30:39 DEBUG [fingerprint.pipeline] nmap_upnp stdout_chars=459
+2026-03-25T16:30:39 INFO [fingerprint.pipeline] host_kind=mobile (iot=UPnP com fabricante ou modelo; mobile=resto)
+2026-03-25T16:30:39 INFO [fingerprint.pipeline] STAGE pcap_capture START duration_s=60 filter_host=192.168.59.3
+2026-03-25T16:30:39 DEBUG [fingerprint.pipeline] dumpcap_cmd=dumpcap -i enp0s3 -w runs/192.168.59.3_20260325_163013/pcaps/capture_192.168.59.3_20260325_163013.pcap -a duration:60 -f host 192.168.59.3
+2026-03-25T16:30:41 INFO [fingerprint.pipeline] STAGE nping_probe cmd=nping --tcp -p 80,443,22,445,139,3389,8080,8443,9100,5357 --flags syn --count 3 192.168.59.3
+2026-03-25T16:31:11 DEBUG [fingerprint.pipeline] nping rc_ok stdout_chars=6464 stderr_chars=0
+2026-03-25T16:31:39 INFO [fingerprint.pipeline] STAGE pcap_capture END elapsed=1m 00.23s pcap_path=runs/192.168.59.3_20260325_163013/pcaps/capture_192.168.59.3_20260325_163013.pcap size_bytes=139376
+2026-03-25T16:31:39 INFO [fingerprint.pipeline] STAGE p0f START
+2026-03-25T16:31:39 DEBUG [fingerprint.pipeline] p0f_cmd=p0f -r /home/carregando/fullprint/runs/192.168.59.3_20260325_163013/pcaps/capture_192.168.59.3_20260325_163013.pcap
+2026-03-25T16:31:39 INFO [fingerprint.pipeline] STAGE p0f parse summary processed_packets=417 blocks_count=54 warnings=0
+2026-03-25T16:31:39 INFO [fingerprint.p0f_extract] extract_p0f_sets target=192.168.59.3 client_syn=1 server_synack=0 client_mtu=1 server_mtu=0
+2026-03-25T16:31:39 DEBUG [fingerprint.p0f_extract] extract_p0f_sets client_syn_raw_sig_set=['4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0']
+2026-03-25T16:31:39 DEBUG [fingerprint.p0f_extract] extract_p0f_sets server_synack_raw_sig_set=[]
+2026-03-25T16:31:39 INFO [fingerprint.pipeline] STAGE tshark_syn_fallback START
+2026-03-25T16:31:39 INFO [fingerprint.tshark] tshark start pcap=runs/192.168.59.3_20260325_163013/pcaps/capture_192.168.59.3_20260325_163013.pcap size_bytes=139376 ip=192.168.59.3
+2026-03-25T16:31:40 DEBUG [fingerprint.tshark] tshark try_filter no rows rc=0 filter=ip.src==192.168.59.3 && tcp.flags.syn==1 && tcp.flags.ack==1
+2026-03-25T16:31:40 INFO [fingerprint.tshark] tshark try_filter filter=ip.src==192.168.59.3 && tcp.flags.syn==1 && tcp.flags.ack==0 matching_lines=5 first_row='64\t65535\t1460\t10\t0402\t080ab71e5de800000000'
+2026-03-25T16:31:41 DEBUG [fingerprint.tshark] tshark parsed fields ttl=64 win=65535 mss=1460 ws=10 opts=None
+2026-03-25T16:31:41 INFO [fingerprint.tshark] tshark done chosen_filter=ip.src==192.168.59.3 && tcp.flags.syn==1 && tcp.flags.ack==0 ttl=64 window_size=65535 mss=1460 ws=10 options_order=None
+2026-03-25T16:31:41 INFO [fingerprint.pipeline] STAGE tshark_syn_fallback END elapsed=1.20s pcap_syn={"chosen_filter": "ip.src==192.168.59.3 && tcp.flags.syn==1 && tcp.flags.ack==0", "filters_tried": ["ip.src==192.168.59.3 && tcp.flags.syn==1 && tcp.flags.ack==1", "ip.src==192.168.59.3 && tcp.flags.syn==1 && tcp.flags.ack==0"], "mss": "1460", "options_order": null, "sack_perm": "0402", "source": "tshark_syn_fallback", "ts_present": "1", "tshark_stderr": "Running as user \"root\" and group \"root\". This could be dangerous.\nRunning as user \"root\" and group \"root\". This could be dangerous.\nRunning as user \"root\" and group \"root\". This could be dangerous.", "ttl": "64", "window_size": "65535", "ws": "10"}
+2026-03-25T16:31:41 DEBUG [fingerprint.mobile_passive] tshark passive stderr: Running as user "root" and group "root". This could be dangerous.
+
+2026-03-25T16:31:41 DEBUG [fingerprint.mobile_passive] tshark passive stderr: Running as user "root" and group "root". This could be dangerous.
+tshark: Some fields aren't valid:
+	dhcp.option.class_id
+
+2026-03-25T16:31:42 DEBUG [fingerprint.mobile_passive] tshark passive stderr: Running as user "root" and group "root". This could be dangerous.
+
+2026-03-25T16:31:42 DEBUG [fingerprint.mobile_passive] tshark passive stderr: Running as user "root" and group "root". This could be dangerous.
+
+2026-03-25T16:31:42 DEBUG [fingerprint.mobile_passive] tshark passive stderr: Running as user "root" and group "root". This could be dangerous.
+
+2026-03-25T16:31:43 DEBUG [fingerprint.mobile_passive] tshark passive stderr: Running as user "root" and group "root". This could be dangerous.
+
+2026-03-25T16:31:43 DEBUG [fingerprint.mobile_passive] tshark passive stderr: Running as user "root" and group "root". This could be dangerous.
+tshark: Some fields aren't valid:
+	mdns.cname
+
+2026-03-25T16:31:43 DEBUG [fingerprint.mobile_passive] tshark passive stderr: Running as user "root" and group "root". This could be dangerous.
+
+2026-03-25T16:31:43 INFO [fingerprint.mobile_passive] mobile_passive summary ip=192.168.59.3 nonempty_groups=1 dhcp_vendors=0 user_agents=0
+2026-03-25T16:31:44 INFO [fingerprint.pipeline] STAGE bundle_json written path=runs/192.168.59.3_20260325_163013/fingerprint.json
+2026-03-25T16:31:44 INFO [fingerprint.pipeline] STAGE canon_hash START policy=stable
+2026-03-25T16:31:44 INFO [fingerprint.canon] build_canon start policy=stable host_kind=mobile top_level_keys=['meta', 'mobile_nmap', 'mobile_passive', 'nmap', 'p0f', 'paths', 'pcap_syn']
+2026-03-25T16:31:44 INFO [fingerprint.canon] build_canon mobile p0f client_syn count=1
+2026-03-25T16:31:44 INFO [fingerprint.canon] build_canon pcap_syn host_kind=mobile keys=['mss', 'sack_perm', 'ts_present', 'ttl', 'window_size', 'ws']
+2026-03-25T16:31:44 INFO [fingerprint.canon] build_canon result_sections=['p0f', 'pcap_syn']
+2026-03-25T16:31:44 DEBUG [fingerprint.canon] build_canon section p0f = {"extracted": {"client_syn_raw_sig_set": ["4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0"]}}
+2026-03-25T16:31:44 DEBUG [fingerprint.canon] build_canon section pcap_syn = {"mss": "1460", "sack_perm": "0402", "ts_present": "1", "ttl": "64", "window_size": "65535", "ws": "10"}
+2026-03-25T16:31:44 INFO [fingerprint.pipeline] STAGE canon_hash OK canon_str_len=207 sha256=a08a14b7ea36e1bd750b70125ea911e8e653078d15b13d178a287abdd9fc7aed
+2026-03-25T16:31:44 DEBUG [fingerprint.pipeline] CANON_STRING={"p0f":{"extracted":{"client_syn_raw_sig_set":["4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0"]}},"pcap_syn":{"mss":"1460","sack_perm":"0402","ts_present":"1","ttl":"64","window_size":"65535","ws":"10"}}
+2026-03-25T16:31:44 INFO [fingerprint.pipeline] === run end total=1m 30.93s tmarks={'nmap': '26.20s', 'nping_probe': '29.38s', 'dumpcap_capture': '1m 00.23s', 'p0f_native': '19.5 ms', 'tshark_syn_fallback': '1.20s', 'mobile_passive_tshark': '2.49s', 'nmap_mobile': '771.4 ms', 'canon_plus_hash': '1.8 ms'} log_file=runs/192.168.59.3_20260325_163013/fingerprint_pipeline.log ===
