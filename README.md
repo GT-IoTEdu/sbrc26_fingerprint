@@ -1,80 +1,89 @@
 # IoT TCP Fingerprinting Tool
 
-Prototype tool for identifying IoT devices based on characteristics of the TCP/IP stack.
+Prototype tool for identifying IoT devices based on TCP/IP stack characteristics.
 
-The tool performs active probing and passive packet capture to extract stable TCP features from a device.  
-These features are canonicalized and transformed into a SHA-256 hash, generating a fingerprint that reflects the device's network stack behavior.
+This tool combines **active probing** and **passive packet capture** to extract stable TCP features from a device. These features are canonicalized and hashed using SHA-256, producing a fingerprint that reflects the device's network stack behavior.
+
+---
 
 ## Overview
 
-The fingerprint generation process follows these steps:
+The fingerprint generation pipeline follows these steps:
 
 1. Active scan of the target device using Nmap
-2. Short packet capture of the device traffic
+2. Short packet capture of device traffic
 3. Trigger TCP responses using SYN probes
-4. Extract TCP/IP features from the captured packets
+4. Extract TCP/IP features from captured packets
 5. Canonicalize stable features
 6. Generate a SHA-256 fingerprint
 
+---
+
 ## Requirements
 
-### System tools (must be on `PATH` or configured)
+### System Tools (must be available in `PATH`)
 
-| Tool | Role |
-|------|------|
-| **nmap** | UPnP discovery (`sudo nmap` is used for some scripts) |
-| **nping** | SYN probes (usually bundled with Nmap) |
-| **dumpcap** | PCAP capture (Wireshark / `wireshark-common`) |
-| **tshark** | TCP option extraction from PCAP |
-| **p0f** | Offline TCP fingerprint from PCAP |
-| **sudo** | Required on Linux for `nmap` and often for `dumpcap` / capture |
+| Tool        | Role                                              |
+| ----------- | ------------------------------------------------- |
+| **nmap**    | UPnP discovery (some scripts use `sudo nmap`)     |
+| **nping**   | SYN probes (bundled with Nmap)                    |
+| **dumpcap** | PCAP capture (Wireshark / `wireshark-common`)     |
+| **tshark**  | TCP option extraction from PCAP                   |
+| **p0f**     | Offline TCP fingerprinting from PCAP              |
+| **sudo**    | Required on Linux for scanning and packet capture |
+
+---
 
 ### Python
 
-- **Python 3.8+**
-- Dependencies listed in `requirements.txt` (see [Installation](#installation)).
+* **Python 3.8+**
+* Dependencies listed in `requirements.txt`
 
 ---
 
 ## Installation
 
-### 1. Clone and enter the repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/GT-IoTEdu/fingerprint.git
 cd fingerprint
 ```
 
-### 2. Python virtual environment (recommended)
+### 2. Create a virtual environment (recommended)
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate   # Linux / macOS
-# .venv\Scripts\activate    # Windows CMD/PowerShell
+# .venv\Scripts\activate    # Windows
+
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3. Install system packages (example: Ubuntu / Debian)
+### 3. Install system dependencies (Ubuntu / Debian example)
 
 ```bash
 sudo apt update
 sudo apt install -y nmap wireshark-common tshark p0f python3 python3-pip python3-venv
 ```
 
-- **dumpcap** and **tshark** come from `wireshark-common`.
-- **nping** is included with the **nmap** package on most distributions.
-- Grant your user capture rights (optional alternative to always using `sudo`):
+Notes:
 
-  ```bash
-  sudo usermod -aG wireshark "$USER"
-  # log out and back in
-  ```
+* `dumpcap` and `tshark` are included in `wireshark-common`
+* `nping` is included with `nmap`
+* Optional: allow packet capture without sudo
 
-  Many workflows still run the main script with `sudo` because **Nmap UPnP** invokes `sudo nmap` internally.
+```bash
+sudo usermod -aG wireshark "$USER"
+# Log out and log back in
+```
 
+> ⚠️ Some workflows still require `sudo` because Nmap UPnP internally invokes privileged scans.
 
-### 4. Verify tools
+---
+
+### 4. Verify installation
 
 ```bash
 nmap --version
@@ -89,21 +98,22 @@ python3 -c "import requests; print('ok')"
 
 ## Execution
 
-Run from the repository.
+Run commands from the repository root directory.
 
+---
 
-## Usage (quick reference)
+## Usage (Quick Reference)
 
 ```bash
-sudo python3 iot_id_fingerprint.py runs 192.168.1.100 --seconds 60 --iface "Wi-Fi"
+sudo python3 iot_id_fingerprint.py runs 192.168.1.100 --seconds 60 --iface wlan0
 ```
 
-Parameters:
+### Parameters
 
-- `runs` → output directory  
-- `target IP` → device to fingerprint 
-- `seconds` → capture duration  
-- `iface` → network interface  
+* `runs` → Output directory
+* `target IP` → Device to fingerprint
+* `seconds` → Capture duration
+* `iface` → Network interface
 
 ---
 
@@ -111,61 +121,202 @@ Parameters:
 
 The tool generates:
 
-- Packet capture (PCAP)
-- `fingerprint.json` (full bundle)
-- `features_canon.json` / `features_canon.txt` (canonical object and string)
-- `fingerprint_sha256.txt` (hex digest)
-- `fingerprint_pipeline.log` (per-run logging when using the main script)
+* PCAP file (packet capture)
+* `fingerprint.json` (complete data bundle)
+* `features_canon.json` / `features_canon.txt`
+* `fingerprint_sha256.txt` (final hash)
+* `fingerprint_pipeline.log` (execution logs)
 
-## Utils
+---
 
-### Finding the capture interface
+## Utilities
 
+### Find Capture Interface
 
 ```bash
 dumpcap -D
 ```
 
-Each line is numbered; the name is the token after the first dot (e.g. `eth0`, `wlan0`, `enp0s3`).
+Interfaces are listed numerically. The interface name appears after the first dot (e.g., `eth0`, `wlan0`, `enp0s3`).
 
- you can see which interface carries the default route:
+To identify the default route interface:
 
 ```bash
 ip route get 8.8.8.8
 ```
 
-### Network inventory (`iot_scanner.py`)
+---
 
+### Network Inventory (`iot_scanner.py`)
 
 ```bash
-python3 iot_scanner.py                    # whole network
+python3 iot_scanner.py
 ```
 
-**Note:** MAC addresses are read from `ip neighbor` on Linux; on other systems they may show as `Unknown`. Some Nmap UPnP modes may need appropriate privileges.
+* Scans the entire local network
+* Uses `ip neighbor` for MAC address resolution (Linux)
 
-Example output:
+> ⚠️ On non-Linux systems, MAC addresses may appear as `Unknown`.
+
+---
+
+### Example Output
 
 ```
-[*] Iniciando Scanner de Rede...
-    (Rede completa)  
+[*] Starting Network Scanner...
+    (Full Network)
 
 =================================================================
-INVENTÁRIO DE DISPOSITIVOS
+DEVICE INVENTORY
 =================================================================
 IP: 192.168.59.1 | MAC: 0A:00:27:00:00:17
    Manufacturer: MyPublicWiFi - Your Login
    Model Name: Unknown
 --------------------------------------------------
 IP: 192.168.59.2 | MAC: 08:00:27:6F:8B:95
-   Nome: _gateway
+   Name: _gateway
    Manufacturer: pfSense - Login
    Model Name: Unknown
 --------------------------------------------------
 IP: 192.168.59.106 | MAC: D0:76:02:F5:81:9C
-   Nome: Android
+   Name: Smart TV Pro
    Manufacturer: TCL
    Model Name: Smart TV Pro
    UDN: uuid:ff3e3ffd-7577-497c-bbbb-bffc6fe2feff
    SERVER: UPnP/1.0, DLNADOC/1.50 Platinum/1.0.5.13
 --------------------------------------------------
 ```
+
+---
+
+## Troubleshooting
+
+### Device Not Detected in Scanner
+
+If your device does not appear when running `iot_scanner.py` or during fingerprinting, check the following:
+
+---
+
+### ✔️ Quick Checklist
+
+* [ ] Same Wi-Fi / LAN
+* [ ] Correct interface (`--iface`)
+* [ ] Running with `sudo`
+* [ ] Device is powered on and active
+* [ ] No network isolation enabled
+* [ ] Correct IP address
+
+---
+
+### 1. Same Network Segment
+
+The scanner only detects devices in the same local network.
+
+```bash
+ip a
+```
+
+Ensure your device IP matches the same subnet (e.g., `192.168.1.x`).
+
+> ⚠️ Devices on VPNs, guest networks, or VLANs may not be visible.
+
+---
+
+### 2. Correct Network Interface
+
+List interfaces:
+
+```bash
+dumpcap -D
+```
+
+Find active interface:
+
+```bash
+ip route get 8.8.8.8
+```
+
+Use it explicitly:
+
+```bash
+--iface wlan0
+```
+
+---
+
+### 3. Firewall or Network Isolation
+
+Some networks block device discovery:
+
+* AP / Client isolation (Wi-Fi)
+* Firewalls blocking:
+
+  * ICMP (ping)
+  * UPnP (UDP 1900)
+  * TCP responses
+
+Test connectivity:
+
+```bash
+ping <DEVICE_IP>
+```
+
+---
+
+### 4. Device Inactive or in Standby
+
+Some IoT devices sleep when idle.
+
+**Solutions:**
+
+* Wake the device (turn screen on, interact)
+* Generate traffic (streaming, apps)
+* Increase capture duration:
+
+```bash
+--seconds 120
+```
+
+---
+
+### 5. Insufficient Permissions
+
+Run with elevated privileges:
+
+```bash
+sudo python3 iot_scanner.py
+```
+
+Check dumpcap permissions:
+
+```bash
+getcap $(which dumpcap)
+```
+
+---
+
+### 6. IP Address Changed (DHCP)
+
+Rediscover devices:
+
+```bash
+ip neighbor
+```
+
+Or rescan:
+
+```bash
+python3 iot_scanner.py
+```
+
+---
+
+### 7. Verify with Nmap
+
+```bash
+nmap -sn 192.168.1.0/24
+```
+
+If the device is not detected here, the issue is not with this tool.
+
+---
