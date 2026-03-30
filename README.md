@@ -1,322 +1,220 @@
-# IoT TCP Fingerprinting Tool
+# IoT-ID: Deterministic Device Identity from Hybrid Network Fingerprinting
 
-Prototype tool for identifying IoT devices based on TCP/IP stack characteristics.
+IoT-ID is a prototype tool for identifying IoT devices through deterministic fingerprints derived from TCP/IP stack characteristics.
 
-This tool combines **active probing** and **passive packet capture** to extract stable TCP features from a device. These features are canonicalized and hashed using SHA-256, producing a fingerprint that reflects the device's network stack behavior.
-
----
-
-## Overview
-
-The fingerprint generation pipeline follows these steps:
-
-1. Active scan of the target device using Nmap
-2. Short packet capture of device traffic
-3. Trigger TCP responses using SYN probes
-4. Extract TCP/IP features from captured packets
-5. Canonicalize stable features
-6. Generate a SHA-256 fingerprint
+The tool combines **active probing** and **passive traffic analysis** to extract stable network features, which are then canonicalized and hashed using SHA-256. The resulting fingerprint represents a reproducible identity of the device, independent of IP address and resilient to MAC address randomization.
 
 ---
 
-## Requirements
+## Presentation Requirements and Planning
 
-### System Tools (must be available in `PATH`)
-
-| Tool        | Role                                              |
-| ----------- | ------------------------------------------------- |
-| **nmap**    | UPnP discovery (some scripts use `sudo nmap`)     |
-| **nping**   | SYN probes (bundled with Nmap)                    |
-| **dumpcap** | PCAP capture (Wireshark / `wireshark-common`)     |
-| **tshark**  | TCP option extraction from PCAP                   |
-| **p0f**     | Offline TCP fingerprinting from PCAP              |
-| **sudo**    | Required on Linux for scanning and packet capture |
+Description of the requirements and planning for the SBRC demonstration, including the necessary equipment to showcase the tool.
 
 ---
 
-### Python
+# Overview
 
-* **Python 3.8+**
-* Dependencies listed in `requirements.txt`
+IoT-ID implements a hybrid fingerprinting pipeline composed of:
+
+1. Active scanning using Nmap
+2. Controlled packet capture using dumpcap
+3. TCP SYN probing via nping
+4. Passive fingerprint extraction using p0f
+5. TCP feature extraction from PCAP using tshark
+6. Canonicalization of stable features
+7. SHA-256 hash generation
+
+The goal is to produce a **deterministic and reproducible device identity** based solely on network behavior.
 
 ---
 
-## Installation
+# Repository Structure
 
-### 1. Clone the repository
+- `iot_id_fingerprint.py` → Main fingerprinting pipeline
+- `iot_scanner.py` → Network discovery utility
+- `runs/` → Output directory (captures, logs, fingerprints)
+- `requirements.txt` → Python dependencies
+- `README.md` → Documentation
 
-```bash
-git clone https://github.com/GT-IoTEdu/fingerprint.git
-cd fingerprint
-```
+---
 
-### 2. Create a virtual environment (recommended)
+# Badges Considered
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate   # Linux / macOS
-# .venv\Scripts\activate    # Windows
+This artifact targets the following SBRC badges:
 
-pip install --upgrade pip
-pip install -r requirements.txt
-```
+- **Available (SeloD)**
+- **Functional (SeloF)**
+- **Reusable / Sustainable (SeloS)**
+- **Reproducible (SeloR)**
 
-### 3. Install system dependencies (Ubuntu / Debian example)
+---
+
+# Basic Information
+
+## Execution Environment
+
+- OS: Linux (Ubuntu 20.04+ recommended)
+- Python: 3.8+
+- Network: Local network (LAN)
+- Privileges: `sudo` required for packet capture and scanning
+
+## Hardware Requirements
+
+- CPU: 2+ cores
+- RAM: 4 GB or more
+- Disk: at least 1 GB free
+
+---
+
+# Dependencies
+
+## System Tools
+
+| Tool        | Purpose |
+|-------------|--------|
+| nmap        | Active scanning and UPnP discovery |
+| nping       | TCP SYN probing |
+| dumpcap     | Packet capture |
+| tshark      | TCP feature extraction |
+| p0f         | Passive fingerprinting |
+
+## Installation (Ubuntu / Debian)
 
 ```bash
 sudo apt update
 sudo apt install -y nmap wireshark-common tshark p0f python3 python3-pip python3-venv
 ```
 
-Notes:
-
-* `dumpcap` and `tshark` are included in `wireshark-common`
-* `nping` is included with `nmap`
-* Optional: allow packet capture without sudo
-
-```bash
-sudo usermod -aG wireshark "$USER"
-# Log out and log back in
-```
-
-> ⚠️ Some workflows still require `sudo` because Nmap UPnP internally invokes privileged scans.
-
 ---
 
-### 4. Verify installation
+## Python Dependencies
 
 ```bash
-nmap --version
-nping --version
-dumpcap -v
-tshark --version
-p0f -h || true
-python3 -c "import requests; print('ok')"
+pip install -r requirements.txt
 ```
 
 ---
 
-## Execution
+# Security Considerations
 
-Run commands from the repository root directory.
+⚠️ IoT-ID performs active probing and packet capture.
+
+- Generates TCP SYN traffic
+- Captures network packets (PCAP)
+- May trigger IDS/IPS alerts
+
+Recommendations:
+
+- Use only in controlled environments
+- Do not run on unauthorized networks
+- Ensure compliance with institutional policies
 
 ---
 
-## Usage (Quick Reference)
+# Installation
 
 ```bash
-sudo python3 iot_id_fingerprint.py runs 192.168.1.100 --seconds 60 --iface wlan0
+git clone https://github.com/GT-IoTEdu/sbrc26_fingerprint.git
+cd sbrc26_fingerprint
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
-
-### Parameters
-
-* `runs` → Output directory
-* `target IP` → Device to fingerprint
-* `seconds` → Capture duration
-* `iface` → Network interface
 
 ---
 
-## Output
+# Minimal Working Example
+
+Run a basic fingerprint extraction:
+
+```bash
+sudo python3 iot_id_fingerprint.py runs 192.168.1.100 --seconds 30 --iface wlan0
+```
+
+Expected outputs:
+
+- PCAP capture file
+- `fingerprint.json`
+- `features_canon.json`
+- `fingerprint_sha256.txt`
+- Execution logs
+
+This confirms that the tool is correctly installed and operational.
+
+---
+
+# Experiments
+
+This section describes how to reproduce the main claims of the paper.
+
+---
+
+## Claim 1 – Deterministic Fingerprints
+
+**Objective:** Verify fingerprint stability across multiple executions.
+
+### Procedure
+
+```bash
+for i in {1..5}; do
+  sudo python3 iot_id_fingerprint.py runs 192.168.1.100 --seconds 60 --iface wlan0
+done
+```
+
+### Expected Result
+
+- Identical SHA-256 fingerprints across runs
+
+---
+
+## Claim 2 – Hybrid Fingerprinting Improves Discrimination
+
+**Objective:** Evaluate the benefit of combining active and passive features.
+
+### Procedure
+
+Compare:
+
+- Nmap-only features
+- p0f-only features
+- Hybrid pipeline (IoT-ID)
+
+### Expected Result
+
+- Hybrid approach yields more distinctive fingerprints
+
+---
+
+# Usage
+
+```bash
+sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds <SECONDS> --iface <INTERFACE>
+```
+
+---
+
+# Output
 
 The tool generates:
 
-* PCAP file (packet capture)
-* `fingerprint.json` (complete data bundle)
-* `features_canon.json` / `features_canon.txt`
-* `fingerprint_sha256.txt` (final hash)
-* `fingerprint_pipeline.log` (execution logs)
+- PCAP capture
+- `fingerprint.json`
+- Canonical feature representation
+- SHA-256 fingerprint
+- Logs
 
 ---
 
-## Utilities
+# Reproducibility Notes
 
-### Find Capture Interface
-
-```bash
-dumpcap -D
-```
-
-Interfaces are listed numerically. The interface name appears after the first dot (e.g., `eth0`, `wlan0`, `enp0s3`).
-
-To identify the default route interface:
-
-```bash
-ip route get 8.8.8.8
-```
+- Experiments should be executed in a stable network environment
+- Device activity may influence captured traffic
+- Recommended to repeat experiments under similar conditions
 
 ---
 
-### Network Inventory (`iot_scanner.py`)
+# LICENSE
 
-```bash
-python3 iot_scanner.py
-```
-
-* Scans the entire local network
-* Uses `ip neighbor` for MAC address resolution (Linux)
-
-> ⚠️ On non-Linux systems, MAC addresses may appear as `Unknown`.
-
----
-
-### Example Output
-
-```
-[*] Starting Network Scanner...
-    (Full Network)
-
-=================================================================
-DEVICE INVENTORY
-=================================================================
-IP: 192.168.59.1 | MAC: 0A:00:27:00:00:17
-   Manufacturer: MyPublicWiFi - Your Login
-   Model Name: Unknown
---------------------------------------------------
-IP: 192.168.59.2 | MAC: 08:00:27:6F:8B:95
-   Name: _gateway
-   Manufacturer: pfSense - Login
-   Model Name: Unknown
---------------------------------------------------
-IP: 192.168.59.106 | MAC: D0:76:02:F5:81:9C
-   Name: Smart TV Pro
-   Manufacturer: TCL
-   Model Name: Smart TV Pro
-   UDN: uuid:ff3e3ffd-7577-497c-bbbb-bffc6fe2feff
-   SERVER: UPnP/1.0, DLNADOC/1.50 Platinum/1.0.5.13
---------------------------------------------------
-```
-
----
-
-## Troubleshooting
-
-### Device Not Detected in Scanner
-
-If your device does not appear when running `iot_scanner.py` or during fingerprinting, check the following:
-
----
-
-### ✔️ Quick Checklist
-
-* [ ] Same Wi-Fi / LAN
-* [ ] Correct interface (`--iface`)
-* [ ] Running with `sudo`
-* [ ] Device is powered on and active
-* [ ] No network isolation enabled
-* [ ] Correct IP address
-
----
-
-### 1. Same Network Segment
-
-The scanner only detects devices in the same local network.
-
-```bash
-ip a
-```
-
-Ensure your device IP matches the same subnet (e.g., `192.168.1.x`).
-
-> ⚠️ Devices on VPNs, guest networks, or VLANs may not be visible.
-
----
-
-### 2. Correct Network Interface
-
-List interfaces:
-
-```bash
-dumpcap -D
-```
-
-Find active interface:
-
-```bash
-ip route get 8.8.8.8
-```
-
-Use it explicitly:
-
-```bash
---iface wlan0
-```
-
----
-
-### 3. Firewall or Network Isolation
-
-Some networks block device discovery:
-
-* AP / Client isolation (Wi-Fi)
-* Firewalls blocking:
-
-  * ICMP (ping)
-  * UPnP (UDP 1900)
-  * TCP responses
-
-Test connectivity:
-
-```bash
-ping <DEVICE_IP>
-```
-
----
-
-### 4. Device Inactive or in Standby
-
-Some IoT devices sleep when idle.
-
-**Solutions:**
-
-* Wake the device (turn screen on, interact)
-* Generate traffic (streaming, apps)
-* Increase capture duration:
-
-```bash
---seconds 120
-```
-
----
-
-### 5. Insufficient Permissions
-
-Run with elevated privileges:
-
-```bash
-sudo python3 iot_scanner.py
-```
-
-Check dumpcap permissions:
-
-```bash
-getcap $(which dumpcap)
-```
-
----
-
-### 6. IP Address Changed (DHCP)
-
-Rediscover devices:
-
-```bash
-ip neighbor
-```
-
-Or rescan:
-
-```bash
-python3 iot_scanner.py
-```
-
----
-
-### 7. Verify with Nmap
-
-```bash
-nmap -sn 192.168.1.0/24
-```
-
-If the device is not detected here, the issue is not with this tool.
-
----
