@@ -158,6 +158,29 @@ pip install -r requirements.txt
 
 # Minimal Working Example
 
+## Qual é o endereço de rede do meu dispositivo?
+ para descobrir basta buscar com:
+ ```bash
+  sudo python3 iot_net_scanner.py
+```
+## Expected outputs:
+```bash
+[*] Iniciando Scanner de Rede...
+    (Rede completa)
+
+=================================================================
+INVENTÁRIO DE DISPOSITIVOS
+=================================================================
+IP: 192.168.59.106 | MAC: D0:76:02:F5:81:9C
+   Nome: Smart TV Pro
+   Manufacturer: TCL
+   Model Name: Smart TV Pro
+   UDN: uuid:25f02330-1d54-ad02-544c-99ffb213ca35
+   SERVER: UPnP/1.0, DLNADOC/1.50 Platinum/1.0.5.13
+--------------------------------------------------
+...
+```
+
 Run a basic fingerprint extraction:
 
 ```bash
@@ -167,7 +190,7 @@ sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds 60 --iface <INTERF
 ## Expected outputs:
 
 ```bash
-carregando@carregando-VirtualBox:~/fullprint$ sudo python3 iot_id_fingerprint.py runs 192.168.59.106 --seconds 60 --iface enp0s3
+VirtualBox:~ sudo python3 iot_id_fingerprint.py runs 192.168.59.106 --seconds 60 --iface enp0s3
 [*] Running Nmap ...
 [*] UPnP identity detected ...
 [*] Capturing PCAP with dumpcap (async) ...
