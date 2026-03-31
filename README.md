@@ -161,10 +161,22 @@ pip install -r requirements.txt
 Run a basic fingerprint extraction:
 
 ```bash
-sudo python3 iot_id_fingerprint.py runs 192.168.1.100 --seconds 30 --iface wlan0
+sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds 60 --iface <INTERFACE>
 ```
 
-Expected outputs:
+## Expected outputs:
+[*] Running Nmap ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"TCL","model_name":"Smart TV Pro","name":"Smart TV Pro","server":"UPnP/1.0, DLNADOC/1.50 Platinum/1.0.5.13"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:65535,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535"}}
+
+=== FINGERPRINT_HASH ===
+e20c48257b98e86fa11d7c4444e7e5da7176a1b328719ea5f46f831951392d51
 
 - PCAP capture file
 - `fingerprint.json`
