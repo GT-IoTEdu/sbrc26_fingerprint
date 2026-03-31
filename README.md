@@ -166,7 +166,7 @@ sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds 60 --iface <INTERF
 
 ## Expected outputs:
 
-
+```bash
 carregando@carregando-VirtualBox:~/fullprint$ sudo python3 iot_id_fingerprint.py runs 192.168.59.106 --seconds 60 --iface enp0s3
 [*] Running Nmap ...
 [*] UPnP identity detected ...
@@ -199,7 +199,17 @@ p0f_native        : 13.5 ms
 tshark_syn_fallback: 2.01s
 canon_plus_hash   : 0.8 ms
 TOTAL             : 2m 39.10s
+```
+## Understanding the Generated Data
+- `runs/` — root directory provided to the CLI; contains one subdirectory per execution (`<IP>_timestamp`) with all artifacts generated during that run.
 
+- `features_canon.json` — human-readable JSON object containing the canonical subset (from `nmap`, `p0f`, and `pcap_syn`, depending on host type and policy).
+
+- `features_canon.txt` — single-line file containing the **CANON_STRING** (compact JSON, UTF-8) used as input to the hash.
+
+- `fingerprint_sha256.txt` — single-line file containing the SHA-256 hash (lowercase hexadecimal) of the canonical string.
+
+- `fingerprint_pipeline.log` — detailed log of pipeline stages, execution times, and errors for debugging purposes.
 ---
 
 # Experiments
