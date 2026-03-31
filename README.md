@@ -61,7 +61,7 @@ The goal is to produce a **deterministic and reproducible device identity** base
 # Repository Structure
 
 - `iot_id_fingerprint.py` → Main fingerprinting pipeline
-- `iot_scanner.py` → Network discovery utility
+- `iot_net_scanner.py` → Network discovery utility
 - `runs/` → Output directory (captures, logs, fingerprints)
 - `requirements.txt` → Python dependencies
 - `README.md` → Documentation
