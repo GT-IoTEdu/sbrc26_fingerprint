@@ -165,12 +165,15 @@ sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds 60 --iface <INTERF
 ```
 
 ## Expected outputs:
+
+
+carregando@carregando-VirtualBox:~/fullprint$ sudo python3 iot_id_fingerprint.py runs 192.168.59.106 --seconds 60 --iface enp0s3
 [*] Running Nmap ...
 [*] UPnP identity detected ...
 [*] Capturing PCAP with dumpcap (async) ...
-[*] Probing common ports with nping SYN ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
 [*] Running p0f (native) (offline -r) ...
-[*] Extracting SYN/SYN+ACK TCP features ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
 
 === CANON_STRING ===
 {"nmap":{"manufacturer":"TCL","model_name":"Smart TV Pro","name":"Smart TV Pro","server":"UPnP/1.0, DLNADOC/1.50 Platinum/1.0.5.13"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:65535,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535"}}
@@ -178,13 +181,24 @@ sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds 60 --iface <INTERF
 === FINGERPRINT_HASH ===
 e20c48257b98e86fa11d7c4444e7e5da7176a1b328719ea5f46f831951392d51
 
-- PCAP capture file
-- `fingerprint.json`
-- `features_canon.json`
-- `fingerprint_sha256.txt`
-- Execution logs
+[OK] Saved:
+  runs/192.168.59.106_20260324_214710/features_canon.json
+  runs/192.168.59.106_20260324_214710/features_canon.txt
+  runs/192.168.59.106_20260324_214710/fingerprint_sha256.txt
 
-This confirms that the tool is correctly installed and operational.
+[OK] Bundle salvo em:
+ /home/carregando/fullprint/runs/192.168.59.106_20260324_214710
+
+[OK] Log de pipeline: runs/192.168.59.106_20260324_214710/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 1m 36.79s
+dumpcap_capture   : 1m 00.26s
+nping_probe       : 29.11s
+p0f_native        : 13.5 ms
+tshark_syn_fallback: 2.01s
+canon_plus_hash   : 0.8 ms
+TOTAL             : 2m 39.10s
 
 ---
 
