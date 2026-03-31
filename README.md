@@ -158,21 +158,23 @@ pip install -r requirements.txt
 
 # Minimal Working Example
 
-## Qual é o endereço de rede do meu dispositivo?
- para descobrir basta buscar com:
+## How to Find the Network Address of a Device
+
+To discover devices on your local network, run:
+
  ```bash
   sudo python3 iot_net_scanner.py
 ```
 ## Expected outputs:
 ```bash
-[*] Iniciando Scanner de Rede...
-    (Rede completa)
+[*] Starting Network Scanner...
+    (Full network scan)
 
 =================================================================
-INVENTÁRIO DE DISPOSITIVOS
+DEVICE INVENTORY
 =================================================================
 IP: 192.168.59.106 | MAC: D0:76:02:F5:81:9C
-   Nome: Smart TV Pro
+   Name: Smart TV Pro
    Manufacturer: TCL
    Model Name: Smart TV Pro
    UDN: uuid:25f02330-1d54-ad02-544c-99ffb213ca35
