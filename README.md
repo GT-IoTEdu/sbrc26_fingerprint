@@ -301,15 +301,32 @@ The tool generates:
 
 # Reproducibility Notes
 
-- Experiments should be executed in a stable network environment
-- Device activity may influence captured traffic
-- Recommended to repeat experiments under similar conditions
+- Experiments should be executed in a stable network environment  
+- Device activity may influence captured traffic  
+- It is recommended to repeat experiments under similar network conditions  
+
+---
+
+Full reproducibility, in the strict sense, is not entirely achievable in this context, as the experiments depend on **physical IoT devices**, which cannot be perfectly replicated across different environments. Identical fingerprints can only be reproduced when using the **same devices**.
+
+To address this limitation, the following validation strategy is adopted:
+
+- Use available IoT or networked devices in the local network  
+- Ensure devices are **distinct and network-visible**  
+- Execute the IoT-ID pipeline across multiple devices  
+
+Expected behavior:
+
+- The same device produces a **stable fingerprint**  
+- Different devices produce **distinct fingerprints**  
+
+This approach ensures **functional and comparative reproducibility**, even without identical hardware.
 
 ---
 
 # LICENSE
 
-Copyright (c) [2025] [RNP – REDE NACIONAL DE ENSINO E PESQUISA]
+Copyright (c) 2025 RNP – National Research and Education Network (Brazil)
 
-Este código foi desenvolvido no âmbito do Programa Hackers do Bem e está licenciado sob os termos da Licença BSD. Ele pode ser livremente utilizado, modificado e distribuído, inclusive para fins comerciais, desde que este aviso de direitos autorais seja mantido.
-Este software é fornecido “como está”, sem qualquer garantia, expressa ou implícita, incluindo, sem limitação, garantias de comercialização ou adequação a um propósito específico. A RNP e os autores não se responsabilizam por quaisquer danos ou prejuízos decorrentes do uso deste software.
+This code was developed under the Hackers do Bem Program and is licensed under the terms of the BSD License. It may be freely used, modified, and distributed, including for commercial purposes, provided that this copyright notice is retained.
+This software is provided "as is", without any warranty, express or implied, including, but not limited to, warranties of merchantability or fitness for a particular purpose. RNP and the authors shall not be held liable for any damages or losses arising from the use of this software.
