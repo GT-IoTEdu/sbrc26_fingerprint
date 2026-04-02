@@ -1,0 +1,2 @@
+# Evita shebang partido no Linux (bash\r) quando o repo é editado no Windows
+*.sh text eol=lf
