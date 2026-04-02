@@ -249,33 +249,52 @@ This section describes how to reproduce the main claims of the paper.
 
 ### Procedure
 
+1. Identify a target IoT device in your local network:
+
+```bash
+python3 iot_scanner.py
+```
+
+2. Identify your active network interface:
+
+```bash
+dumpcap -D
+```
+
+or
+
+```bash
+ip route get 8.8.8.8
+```
+
+3. Run the fingerprinting process multiple times:
+
 ```bash
 for i in {1..5}; do
-  sudo python3 iot_id_fingerprint.py runs 192.168.1.100 --seconds 60 --iface wlan0
+  sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds 60 --iface <INTERFACE>
 done
 ```
 
-### Expected Result
+---
 
-- Identical SHA-256 fingerprints across runs
+### Parameters
+
+- `<TARGET_IP>` → IP address of a device in your local network  
+- `<INTERFACE>` → active network interface (e.g., wlan0, eth0, enp0s3)
 
 ---
 
-## Claim 2 – Hybrid Fingerprinting Improves Discrimination
-
-**Objective:** Evaluate the benefit of combining active and passive features.
-
-### Procedure
-
-Compare:
-
-- Nmap-only features
-- p0f-only features
-- Hybrid pipeline (IoT-ID)
-
 ### Expected Result
 
-- Hybrid approach yields more distinctive fingerprints
+- Identical SHA-256 fingerprints across executions for the same device
+
+---
+
+### Notes
+
+- Replace `<TARGET_IP>` and `<INTERFACE>` according to your environment  
+- Ensure the IoT device is active during all executions  
+- Use the same network conditions to minimize variability 
 
 ---
 
