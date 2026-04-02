@@ -245,67 +245,17 @@ This section describes how to reproduce the main claims of the paper.
 
 ## Claim 1 – Deterministic Fingerprints
 
-**Objective:** Verify fingerprint stability across multiple executions.
+**Objective:** Verify fingerprint stability across multiple executions (E.g.5).
 
 ### Procedure
-
-1. Identify a target IoT device in your local network:
-
-```bash
-python3 iot_scanner.py
-```
-
-2. Identify your active network interface:
-
-```bash
-dumpcap -D
-```
-
-or
-
-```bash
-ip route get 8.8.8.8
-```
-
-3. Run the fingerprinting process multiple times:
-
-```bash
-for i in {1..5}; do
-  sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds 60 --iface <INTERFACE>
-done
-```
-
----
-
-### Parameters
-
-- `<TARGET_IP>` → IP address of a device in your local network  
-- `<INTERFACE>` → active network interface (e.g., wlan0, eth0, enp0s3)
-
----
-
-### Expected Result
-
-- Identical SHA-256 fingerprints across executions for the same device
-
----
-
-### Notes
-
-- Replace `<TARGET_IP>` and `<INTERFACE>` according to your environment  
-- Ensure the IoT device is active during all executions  
-- Use the same network conditions to minimize variability 
-
----
 
 # Usage
 
 ```bash
-sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds <SECONDS> --iface <INTERFACE>
+cd /fingerprint
+chmod +x fingerprint_subnet.sh
+./fingerprint_subnet.sh
 ```
-
----
-
 # Output
 
 The tool generates:
@@ -316,14 +266,64 @@ The tool generates:
 - SHA-256 fingerprint
 - Logs
 
+By default the script runs **5 fingerprint passes per discovered IP** (folders get distinct timestamps each time). Use `-r N` to change the count (e.g. `-r 1` for a single pass per host).
+
+The table presents the devices evaluated in the study, including their categories, manufacturers, models, and the respective quantities used in the tests.
+
+| Device        | Manufacturer         | Model                      | Qty. |
+|---------------|----------------------|----------------------------|------|
+| Game Console  | Microsoft            | Xbox One                   | 1    |
+| IP Camera     | TP-Link              | C500 (Model A)             | 3    |
+| IP Camera     | Vlx LED EXcelente    | Speed Dome Solar (Model B) | 1    |
+| Router        | FiberHome            | HG6143D                    | 1    |
+| Router        | TP-Link              | EC220-G5                   | 1    |
+| Smart Bulb    | Avant NEO            | RGB E27                    | 1    |
+| Smart TV      | TCL                  | UnionTV                    | 1    |
+| Smart TV      | TCL                  | Smart TV Pro               | 1    |
+| Smart TV      | Samsung              | UN32J4303                  | 2    |
+| Smart TV      | Samsung              | QN55Q60TAGXZD              | 1    |
+| TV Box        | Xiaomi               | MiTV-AESP0                 | 1    |
+| Wi-Fi Printer | HP                   | Deskjet 4640               | 1    |
+
+### Result Fingerprint
+
+- Identical SHA-256 fingerprints across runs
+
+| Device                     | SHA-256 Fingerprint                                              |
+|----------------------------|------------------------------------------------------------------|
+| TV TCL (UnionTV)           | 994f131342176c20415565dab0adf2666b160422d3df1511c0a37ae135985add |
+| Router FiberHome           | 14407342dc69a801f52f6cead97d00e5260b7206072f145e6fde19e07cb1f157 |
+| Smart Bulb                 | 993e9afc860d624a332822679ea4efc3490c2734ba84ad160c8d36abf0d546f7 |
+| TV TCL (Smart TV Pro)      | e20c48257b98e86fa11d7c4444e7e5da7176a1b328719ea5f46f831951392d51 |
+| TV Samsung (1)             | 1f4e8c4af2be567b929cf5b7409c57d648ea062262eeab566e11e32c1b437e94 |
+| TV Xiaomi                  | 6397f4729927379fde73d5c1ea234ef1070d3785b4f271c562fa4cb688be2d48 |
+| TV Samsung 55"             | 410528d091cb14cea300d79e74348087fc3a1b351584c919650c3a6f24ec18d1 |
+| Printer                    | 93ef878c8f2de4eab5a5c780b1dc146d28df337116d8e93019bd9f4cc78c41df |
+| Xbox One                   | 50f1736613c079a70b2d094c680cd8f9027adeb34ca7e90e7c4322a73492eb01 |
+| TV Samsung (2)             | 1f4e8c4af2be567b929cf5b7409c57d648ea062262eeab566e11e32c1b437e94 |
+| Router TP-Link             | dce0ee76d22f60bec93ce4f6478a9ffe439b2b6e914bafbafe0048685402b2cc |
+| IP Camera Model A (1)      | c61f28839b696b65307cef2db341e976fadf10012d9c0f01f6a490b1e3e5742f |
+| IP Camera Model A (2)      | c61f28839b696b65307cef2db341e976fadf10012d9c0f01f6a490b1e3e5742f |
+| IP Camera Model A (3)      | c61f28839b696b65307cef2db341e976fadf10012d9c0f01f6a490b1e3e5742f |
+| IP Camera Model B          | 5b60133e2971f571f7a4ceadd55041a78771b65189e64c0f891eb687ab37bc74 |
 ---
+
+
+### Expected Result
+
+- Identical SHA-256 fingerprints across executions for the same device
+
+---
+
+
+
 
 # Reproducibility Notes
 
 - Experiments should be executed in a stable network environment  
 - Device activity may influence captured traffic  
 - It is recommended to repeat experiments under similar network conditions  
-
+- To obtain the same SHA-256 fingerprint, the device must have identical hardware and software configurations, as listed in the device table.
 ---
 
 Full reproducibility, in the strict sense, is not entirely achievable in this context, as the experiments depend on **physical IoT devices**, which cannot be perfectly replicated across different environments. Identical fingerprints can only be reproduced when using the **same devices**.
