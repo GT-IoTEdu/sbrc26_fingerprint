@@ -331,7 +331,7 @@ Full reproducibility, in the strict sense, is not entirely achievable in this co
 To address this limitation, the following validation strategy is adopted:
 
 - Use available IoT or networked devices in the local network  
-- Ensure devices are **distinct and network-visible**  
+- Ensure devices are **network-visible**  
 - Execute the IoT-ID pipeline across multiple devices  
 
 Expected behavior:
