@@ -243,7 +243,7 @@ This section describes how to reproduce the main claims of the paper.
 
 ---
 
-## Claim 1 – Deterministic Fingerprints
+## Claim #1 – Deterministic Fingerprints
 
 **Objective:** Verify fingerprint stability across multiple executions (E.g.5).
 
