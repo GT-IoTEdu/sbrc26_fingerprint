@@ -12,7 +12,7 @@ This section describes the requirements and planning for the SBRC demonstration,
 ### Demonstration Requirements (Lab Setup)
 
 * A Linux machine or Linux virtual machine connected to the same subnet as the target devices (bridge networking mode when applicable).
-* Devices available on the same LAN (e.g., smart TVs, IoT devices, smartphones), preferably active during the demonstration.
+* Devices available on the same LAN (e.g., smart TVs, IoT devices), preferably active during the demonstration.
 * All tools listed in the **Dependencies** section properly installed and configured.
 * Sufficient privileges (`sudo`) to perform packet capture and active probing.
 
@@ -315,7 +315,76 @@ The table presents the devices evaluated in the study, including their categorie
 
 ---
 
+## Claim #2 – Cross-Device Collision Resolution via L7 Attributes
 
+**Objective:** Verify that IoT-ID can distinguish devices with identical L3/L4
+signatures by incorporating application-layer (L7) metadata collected via
+UPnP/nmap (Table 4 of the paper).
+
+**Context:** The Xiaomi MiTV, TCL TVs, and TP-Link Router share identical
+TCP/IP attributes (MSS=1460, TTL=64, window_size=65535 or similar). Under
+traditional passive fingerprinting, these devices would be indistinguishable.
+IoT-ID resolves the ambiguity by incorporating `manufacturer` and `model_name`
+via UPnP.
+
+### Prerequisites
+
+- Two or more devices with similar TCP/IP stacks available on the local network
+- Environment configured as described in the **Installation** section
+
+### Procedure
+
+**Step 1 — Collect the fingerprint of the first device:**
+
+```bash
+sudo python3 iot_id_fingerprint.py runs <IP_DEVICE_A> --seconds 60 --iface <INTERFACE>
+```
+
+**Step 2 — Collect the fingerprint of the second device:**
+
+```bash
+sudo python3 iot_id_fingerprint.py runs <IP_DEVICE_B> --seconds 60 --iface <INTERFACE>
+```
+
+**Step 3 — Compare the generated canon strings:**
+
+```bash
+cat runs/<IP_DEVICE_A>_*/features_canon.txt
+cat runs/<IP_DEVICE_B>_*/features_canon.txt
+```
+
+**Step 4 — Compare the final hashes:**
+
+```bash
+cat runs/<IP_DEVICE_A>_*/fingerprint_sha256.txt
+cat runs/<IP_DEVICE_B>_*/fingerprint_sha256.txt
+```
+
+### Expected Result
+
+The `features_canon.txt` files for both devices should show identical or very
+similar L3/L4 values (`mss`, `ttl`, `window_size`), but **distinct canon strings**
+due to the L7 fields (`manufacturer`, `model_name`). The final SHA-256 hashes
+must be **different**, confirming that the application layer resolves the collision.
+
+Example extracted from the paper (Tables 4 and 5):
+
+| Device                | MSS  | TTL | Window | SHA-256                                                           |
+|-----------------------|------|-----|--------|-------------------------------------------------------------------|
+| TV TCL (Smart TV Pro) | 1460 | 64  | 65535  | `e20c48257b98e86fa11d7c4444e7e5da7176a1b328719ea5f46f831951392d51`|
+| TV Xiaomi             | 1460 | 64  | 65535  | `6397f4729927379fde73d5c1ea234ef1070d3785b4f271c562fa4cb688be2d48`|
+| TV TCL (UnionTV)      | 1460 | 64  | 65535  | `994f131342176c20415565dab0adf2666b160422d3df1511c0a37ae135985add`|
+
+Despite identical L3/L4 attributes, the three devices produce distinct fingerprints
+thanks to the L7 metadata collected via UPnP.
+
+### Estimated Execution Time
+
+~3 minutes per device (dominated by the 60s capture window and nmap scan).
+
+### Expected Resource Usage
+
+~200 MB RAM, ~50 MB disk per execution (PCAP + bundle).
 
 
 # Reproducibility Notes
