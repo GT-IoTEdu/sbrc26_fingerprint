@@ -35,7 +35,7 @@ Opções:
   -o, --outroot DIR   Pasta de saída passada à ferramenta (omissão: runs)
   -s, --seconds N     Duração PCAP --seconds (omissão: 60)
   -r, --repeat N      Quantas corridas por IP (omissão: 5)
-  --cleanup           Apaga artefatos brutos (.pcap e p0f.raw.txt) após hash final
+  --cleanup           Apaga artefatos brutos (.pcap e p0f.raw.txt) ao fim de cada execução
   --no-skip-self      Incluir o próprio IP da máquina na lista
   -n, --dry-run       Só listar IPs e o comando; não executar sudo/python
   -h, --help          Esta ajuda
@@ -116,7 +116,7 @@ echo "[*] Sub-rede:  $CIDR"
 echo "[*] Outroot:   $OUTROOT"
 echo "[*] Seconds:   $SECONDS_CAP"
 echo "[*] Repetições por IP: $REPEAT_PER_IP"
-[[ "$CLEANUP" -eq 1 ]] && echo "[*] Limpeza pós-hash: ativa (--cleanup)"
+[[ "$CLEANUP" -eq 1 ]] && echo "[*] Limpeza de artefatos brutos: ativa (--cleanup)"
 [[ -n "$SELF_IP" ]] && echo "[*] Excluir IP local: $SELF_IP"
 echo ""
 

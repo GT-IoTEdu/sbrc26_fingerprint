@@ -914,6 +914,23 @@ def run_single_fingerprint(
     p0f_raw_path = p0f_dir / f"p0f_{target_ip}_{ts}.raw.txt"
     cleanup_paths: list[Path] = [pcap_path, p0f_raw_path]
 
+    cleanup_removed_count = 0
+    cleanup_error_count = 0
+
+    def run_cleanup_paths() -> tuple[int, int]:
+        removed = 0
+        errors = 0
+        for raw_path in cleanup_paths:
+            try:
+                if raw_path.exists():
+                    raw_path.unlink()
+                    removed += 1
+                    log.info("cleanup removed path=%s", raw_path)
+            except Exception as cleanup_err:
+                errors += 1
+                log.warning("cleanup failed path=%s err=%s", raw_path, cleanup_err)
+        return removed, errors
+
     if not pcap_path.exists() or pcap_path.stat().st_size == 0:
         log.warning("STAGE p0f_tshark SKIP reason=pcap_missing_or_empty")
         print("[!] PCAP não foi criado ou está vazio; pulando p0f/tshark.")
@@ -1076,15 +1093,6 @@ def run_single_fingerprint(
 
             tmarks["canon_plus_hash"] = time.perf_counter() - t0
 
-            if args.cleanup:
-                for raw_path in cleanup_paths:
-                    try:
-                        if raw_path.exists():
-                            raw_path.unlink()
-                            log.info("cleanup removed path=%s", raw_path)
-                    except Exception as cleanup_err:
-                        log.warning("cleanup failed path=%s err=%s", raw_path, cleanup_err)
-
             print("\n=== CANON_STRING ===")
             print(canon_str)
             print("\n=== FINGERPRINT_HASH ===")
@@ -1094,14 +1102,25 @@ def run_single_fingerprint(
             print(f"  {canon_json_path}")
             print(f"  {canon_txt_path}")
             print(f"  {hash_txt_path}")
-            if args.cleanup:
-                print("[*] --cleanup ativo: artefatos brutos removidos (.pcap, p0f.raw.txt)")
 
         except Exception as e:
             tmarks["canon_plus_hash"] = time.perf_counter() - t0
             log.exception("STAGE canon_hash FAIL elapsed=%s", fmt_secs(tmarks["canon_plus_hash"]))
             print("\n[!] Canonização/Hash falhou:")
             print(f"    {e}")
+        finally:
+            if args.cleanup:
+                cleanup_removed_count, cleanup_error_count = run_cleanup_paths()
+                if cleanup_error_count > 0:
+                    print(
+                        "[!] --cleanup ativo: houve erro ao remover alguns artefatos brutos "
+                        "(.pcap, p0f.raw.txt); veja o log."
+                    )
+                else:
+                    print(
+                        "[*] --cleanup ativo: artefatos brutos removidos "
+                        f"(.pcap, p0f.raw.txt) [{cleanup_removed_count} arquivo(s)]."
+                    )
 
     # -------------------------
     # 6) Resumo + TIMING
@@ -1162,7 +1181,7 @@ def main():
     ap.add_argument(
         "--cleanup",
         action="store_true",
-        help="Apaga artefatos brutos (.pcap e p0f.raw.txt) após hash final gerado com sucesso.",
+        help="Apaga artefatos brutos (.pcap e p0f.raw.txt) ao fim da execução (mesmo em falha de hash).",
     )
     ap.add_argument(
         "--log-level",
