@@ -30,6 +30,7 @@ This section describes the requirements and planning for the SBRC demonstration,
   * `<TARGET_IP>`: target device address
   * `<SECONDS>`: duration of packet capture
   * `<INTERFACE>`: network interface used for monitoring
+  * `--cleanup` *(optional)*: removes unnecessary intermediate data generated during execution after the pipeline finishes, keeping only the relevant output artifacts. When enabled, it removes raw artifacts such as `.pcap` and `p0f.raw.txt` at the end of each execution.
 
 * **Operational Requirements:**
   Clarify why root privileges and promiscuous mode are required:
@@ -109,10 +110,10 @@ This artifact targets the following SBRC badges:
 
 | Tool | Version | Purpose |
 |---|---|---|
-| nmap | 7.97 | Active scanning and UPnP discovery |
-| nping | 0.7.97 | TCP SYN probing |
-| dumpcap | 3.6.2 | Packet capture |
-| tshark | 3.6.2 | TCP feature extraction |
+| nmap | 7.95 | Active scanning and UPnP discovery |
+| nping | 0.7.95 | TCP SYN probing |
+| dumpcap | 4.4.15 | Packet capture |
+| tshark | 4.4.15 | TCP feature extraction |
 | p0f | 3.09b | Passive fingerprinting |
 
 ## Installation (Ubuntu / Debian)
@@ -205,7 +206,7 @@ docker compose run --rm fingerprint runs <TARGET_IP> --seconds 60 --iface <INTER
 Example:
 
 ```bash
-docker compose run --rm fingerprint runs 192.168.1.50 --seconds 60 --iface enp3s0 --cleanup
+docker compose run --rm fingerprint runs 192.168.1.254 --seconds 60 --iface enp0s3 --cleanup
 ```
 
 ## Run subnet orchestrator
