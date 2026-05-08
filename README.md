@@ -56,6 +56,13 @@ IoT-ID implements a hybrid fingerprinting pipeline composed of:
 
 The goal is to produce a **deterministic and reproducible device identity** based solely on network behavior.
 
+The figure below illustrates the four main phases of the pipeline: attribute collection
+(active probing via nmap/nping + passive capture), processing and normalization
+(canonicalization), fingerprint generation (SHA-256 hashing), and system output
+(deterministic device identity).
+
+![IoT-ID System Workflow](docs/fluxo_fingerprint_en.png)
+
 ---
 
 # Repository Structure
