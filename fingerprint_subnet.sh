@@ -21,6 +21,7 @@ CIDR=""
 DRY_RUN=0
 SKIP_SELF=1
 REPEAT_PER_IP=5
+CLEANUP=0
 
 die() { echo "fingerprint_subnet.sh: erro: $*" >&2; exit 1; }
 
@@ -34,6 +35,7 @@ Opções:
   -o, --outroot DIR   Pasta de saída passada à ferramenta (omissão: runs)
   -s, --seconds N     Duração PCAP --seconds (omissão: 60)
   -r, --repeat N      Quantas corridas por IP (omissão: 5)
+  --cleanup           Apaga artefatos brutos (.pcap e p0f.raw.txt) após hash final
   --no-skip-self      Incluir o próprio IP da máquina na lista
   -n, --dry-run       Só listar IPs e o comando; não executar sudo/python
   -h, --help          Esta ajuda
@@ -84,6 +86,7 @@ while [[ $# -gt 0 ]]; do
       [[ "$REPEAT_PER_IP" =~ ^[1-9][0-9]*$ ]] || die "-r/--repeat deve ser inteiro >= 1"
       shift 2
       ;;
+    --cleanup) CLEANUP=1; shift ;;
     --no-skip-self) SKIP_SELF=0; shift ;;
     -n|--dry-run) DRY_RUN=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -113,6 +116,7 @@ echo "[*] Sub-rede:  $CIDR"
 echo "[*] Outroot:   $OUTROOT"
 echo "[*] Seconds:   $SECONDS_CAP"
 echo "[*] Repetições por IP: $REPEAT_PER_IP"
+[[ "$CLEANUP" -eq 1 ]] && echo "[*] Limpeza pós-hash: ativa (--cleanup)"
 [[ -n "$SELF_IP" ]] && echo "[*] Excluir IP local: $SELF_IP"
 echo ""
 
@@ -137,6 +141,9 @@ total_runs=0
 for ip in "${HOSTS[@]}"; do
   for ((n = 1; n <= REPEAT_PER_IP; n++)); do
     cmd=(sudo "$PYTHON" "$FP_TOOL" "$OUTROOT" "$ip" --seconds "$SECONDS_CAP" --iface "$IFACE")
+    if [[ "$CLEANUP" -eq 1 ]]; then
+      cmd+=(--cleanup)
+    fi
     echo "================================================================"
     echo "[>] ($n/$REPEAT_PER_IP) ${cmd[*]}"
     echo "================================================================"

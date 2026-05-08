@@ -1,0 +1,16 @@
+services:
+  fingerprint:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fingerprint:latest
+    container_name: fingerprint
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./runs:/app/runs
+    working_dir: /app
+    stdin_open: true
+    tty: true

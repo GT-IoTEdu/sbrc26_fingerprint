@@ -912,6 +912,7 @@ def run_single_fingerprint(
     )
 
     p0f_raw_path = p0f_dir / f"p0f_{target_ip}_{ts}.raw.txt"
+    cleanup_paths: list[Path] = [pcap_path, p0f_raw_path]
 
     if not pcap_path.exists() or pcap_path.stat().st_size == 0:
         log.warning("STAGE p0f_tshark SKIP reason=pcap_missing_or_empty")
@@ -1075,6 +1076,15 @@ def run_single_fingerprint(
 
             tmarks["canon_plus_hash"] = time.perf_counter() - t0
 
+            if args.cleanup:
+                for raw_path in cleanup_paths:
+                    try:
+                        if raw_path.exists():
+                            raw_path.unlink()
+                            log.info("cleanup removed path=%s", raw_path)
+                    except Exception as cleanup_err:
+                        log.warning("cleanup failed path=%s err=%s", raw_path, cleanup_err)
+
             print("\n=== CANON_STRING ===")
             print(canon_str)
             print("\n=== FINGERPRINT_HASH ===")
@@ -1084,6 +1094,8 @@ def run_single_fingerprint(
             print(f"  {canon_json_path}")
             print(f"  {canon_txt_path}")
             print(f"  {hash_txt_path}")
+            if args.cleanup:
+                print("[*] --cleanup ativo: artefatos brutos removidos (.pcap, p0f.raw.txt)")
 
         except Exception as e:
             tmarks["canon_plus_hash"] = time.perf_counter() - t0
@@ -1147,6 +1159,11 @@ def main():
                     help="Quantidade de SYN probes por porta.")
     ap.add_argument("--probe_delay", type=float, default=2.0,
                     help="Segundos de espera após iniciar dumpcap antes do probe.")
+    ap.add_argument(
+        "--cleanup",
+        action="store_true",
+        help="Apaga artefatos brutos (.pcap e p0f.raw.txt) após hash final gerado com sucesso.",
+    )
     ap.add_argument(
         "--log-level",
         default="DEBUG",

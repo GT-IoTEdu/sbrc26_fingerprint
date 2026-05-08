@@ -156,6 +156,42 @@ pip install -r requirements.txt
 
 ---
 
+# Docker (Linux)
+
+For Linux environments, you can run IoT-ID inside Docker with host networking and packet-capture capabilities.
+
+## Build
+
+```bash
+docker compose build
+```
+
+## Run a single target
+
+```bash
+docker compose run --rm fingerprint runs <TARGET_IP> --seconds 60 --iface <INTERFACE> --cleanup
+```
+
+Example:
+
+```bash
+docker compose run --rm fingerprint runs 192.168.1.50 --seconds 60 --iface enp3s0 --cleanup
+```
+
+## Run subnet orchestrator
+
+```bash
+docker compose run --rm --entrypoint bash fingerprint ./fingerprint_subnet.sh -i <INTERFACE> -s 60 --cleanup
+```
+
+Notes:
+
+- `network_mode: host` is required so capture/probing tools can access LAN traffic directly.
+- `NET_ADMIN` and `NET_RAW` capabilities are enabled in `docker-compose.yml`.
+- Output files are persisted in `./runs` on the host.
+
+---
+
 # Minimal Working Example
 
 ## How to Find the Network Address of a Device
