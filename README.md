@@ -161,6 +161,29 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+> **Note:** All Python dependencies must be installed **after** activating the
+> virtual environment. Do not run `pip install` before the `source .venv/bin/activate` step.
+
+---
+
+## Running with sudo
+
+Some pipeline stages (packet capture, active scanning) require root privileges.
+Because `sudo` creates a clean session that does not inherit the active virtual
+environment, you must explicitly pass the virtual environment's interpreter:
+
+```bash
+# Activate the virtual environment first
+source .venv/bin/activate
+
+# Then run with sudo using the venv interpreter
+sudo $(which python3) iot_id_fingerprint.py runs  --seconds 60 --iface 
+```
+
+> **Why `$(which python3)`?** With the virtual environment active, `which python3`
+> resolves to `.venv/bin/python3`, ensuring that `sudo` uses the correct interpreter
+> and all installed dependencies are available.
+
 ---
 
 # Docker (Linux)
