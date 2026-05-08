@@ -107,13 +107,13 @@ This artifact targets the following SBRC badges:
 
 ## System Tools
 
-| Tool        | Purpose |
-|-------------|--------|
-| nmap        | Active scanning and UPnP discovery |
-| nping       | TCP SYN probing |
-| dumpcap     | Packet capture |
-| tshark      | TCP feature extraction |
-| p0f         | Passive fingerprinting |
+| Tool | Version | Purpose |
+|---|---|---|
+| nmap | 7.97 | Active scanning and UPnP discovery |
+| nping | 0.7.97 | TCP SYN probing |
+| dumpcap | 3.6.2 | Packet capture |
+| tshark | 3.6.2 | TCP feature extraction |
+| p0f | 3.09b | Passive fingerprinting |
 
 ## Installation (Ubuntu / Debian)
 
