@@ -161,7 +161,26 @@ sudo $(which python3) iot_id_fingerprint.py runs  --seconds 60 --iface
 
 ## Docker
 
-For Linux environments, you can run IoT-ID inside Docker with host networking and packet-capture capabilities.
+For Linux environments, IoT-ID can run inside a Docker container with host
+networking and packet-capture capabilities, eliminating manual dependency setup.
+
+> ⚠️ **Linux only.** `network_mode: host` is a Linux-specific Docker feature.
+> This setup does **not** work on macOS or Windows.
+
+### Prerequisites
+
+Docker and Docker Compose must be installed on the host:
+
+```bash
+# Install Docker
+curl -fsSL https://get.docker.com | sh
+
+# Install Docker Compose plugin (if not bundled)
+sudo apt install -y docker-compose-plugin
+
+# Allow current user to run Docker without sudo (optional)
+sudo usermod -aG docker $USER
+```
 
 ### Build
 
@@ -172,25 +191,35 @@ docker compose build
 ### Run a single target
 
 ```bash
-docker compose run --rm fingerprint runs <TARGET_IP> --seconds 60 --iface <INTERFACE> --cleanup
+docker compose run --rm fingerprint runs <TARGET_IP> \
+    --seconds 60 --iface <INTERFACE> --cleanup
 ```
 
-Example:
+**Example:**
 
 ```bash
-docker compose run --rm fingerprint runs 192.168.1.254 --seconds 60 --iface enp0s3 --cleanup
+docker compose run --rm fingerprint runs 192.168.1.50 \
+    --seconds 60 --iface enp0s3 --cleanup
 ```
 
 ### Run subnet orchestrator
 
 ```bash
-docker compose run --rm --entrypoint bash fingerprint ./fingerprint_subnet.sh -i <INTERFACE> -s 60 --cleanup
+docker compose run --rm --entrypoint bash fingerprint \
+    ./fingerprint_subnet.sh -i <INTERFACE> -s 60 --cleanup
 ```
 
-**Notes:**
-- `network_mode: host` is required so capture/probing tools can access LAN traffic directly.
-- `NET_ADMIN` and `NET_RAW` capabilities are enabled in `docker-compose.yml`.
-- Output files are persisted in `./runs` on the host.
+### Technical notes
+
+| Setting | Value | Reason |
+|---|---|---|
+| `network_mode` | `host` | Required for capture/probing tools to access LAN traffic directly |
+| `NET_ADMIN` | enabled | Required for network interface configuration |
+| `NET_RAW` | enabled | Required for raw packet capture |
+| Output persistence | `./runs` on host | Output files are mounted and persisted outside the container |
+
+> **Tip:** The `--cleanup` flag is recommended when using Docker to avoid
+> accumulating large `.pcap` files in the `./runs` directory on the host.
 
 ---
 
@@ -376,12 +405,12 @@ traditional passive fingerprinting, these devices would be indistinguishable.
 IoT-ID resolves the ambiguity by incorporating `manufacturer` and `model_name`
 via UPnP.
 
-**Prerequisites**
+**Prerequisites:**
 
 - Two or more devices with similar TCP/IP stacks available on the local network
 - Environment configured as described in the **Installation** section
 
-**Procedure**
+**Procedure:**
 
 **Step 1 — Collect the fingerprint of the first device:**
 
@@ -460,7 +489,7 @@ This section describes the requirements and planning for the SBRC demonstration,
 2. **Fingerprint generation:** Execute the fingerprinting pipeline against a selected device using:
   `sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds <SECONDS> --iface <INTERFACE>`
 
-  Each parameter is explained in [Quick Start](#quick-start-minimal-working-example).
+  Each parameter is explained in [Minimal Working Example](#minimal-working-example).
 
 3. **Determinism check:** Run the pipeline a second time on the same device and compare the resulting SHA-256 hash.
    
