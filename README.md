@@ -58,6 +58,9 @@ sbrc26_fingerprint/
 ├── fingerprint_hash.py       # SHA-256 hashing module
 ├── fingerprint_subnet.sh     # Batch script for subnet-wide fingerprinting
 ├── requirements.txt          # Python dependencies
+├── Dockerfile                # Container image definition
+├── docker-compose.yml        # Docker Compose configuration (host networking + capabilities)
+├── docs/                     # Documentation assets (e.g., workflow diagram)
 ├── testes/                   # Test scripts and validation data
 ├── runs/                     # Output directory (created at runtime)
 └── README.md                 # This file
@@ -173,13 +176,12 @@ Docker and Docker Compose must be installed on the host:
 
 ```bash
 # Install Docker
-curl -fsSL https://get.docker.com | sh
+sudo apt update
+sudo apt install -y docker.io docker-compose-plugin
 
-# Install Docker Compose plugin (if not bundled)
-sudo apt install -y docker-compose-plugin
-
-# Allow current user to run Docker without sudo (optional)
+# Optional: To run Docker without `sudo`, add your user to the `docker` group and restart the session:
 sudo usermod -aG docker $USER
+newgrp docker
 ```
 
 ### Build
