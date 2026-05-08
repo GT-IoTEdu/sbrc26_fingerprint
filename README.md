@@ -1,57 +1,39 @@
 # IoT-ID: Deterministic Device Identity from Hybrid Network Fingerprinting
 
-IoT-ID is a prototype tool for identifying IoT devices through deterministic fingerprints derived from TCP/IP stack characteristics.
+**IoT-ID** is a prototype tool for identifying IoT devices through deterministic fingerprints derived from TCP/IP stack characteristics.
 
 The tool combines **active probing** and **passive traffic analysis** to extract stable network features, which are then canonicalized and hashed using SHA-256. The resulting fingerprint represents a reproducible identity of the device, independent of IP address and resilient to MAC address randomization.
 
-
-## Presentation Requirements and Planning
-
-This section describes the requirements and planning for the SBRC demonstration, including the necessary setup to effectively showcase the tool.
-
-### Demonstration Requirements (Lab Setup)
-
-* A Linux machine or Linux virtual machine connected to the same subnet as the target devices (bridge networking mode when applicable).
-* Devices available on the same LAN (e.g., smart TVs, IoT devices), preferably active during the demonstration.
-* All tools listed in the **Dependencies** section properly installed and configured.
-* Sufficient privileges (`sudo`) to perform packet capture and active probing.
-
-### Presentation Plan
-
-* **Network Discovery:**
-  Identify active devices using `iot_net_scanner.py`, either across the entire network or targeting a specific IP range.
-
-* **Fingerprint Generation:**
-  Execute the fingerprinting pipeline using:
-  `sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds <SECONDS> --iface <INTERFACE>`
-
-  Explain the role of each parameter:
-
-  * `<TARGET_IP>`: target device address
-  * `<SECONDS>`: duration of packet capture
-  * `<INTERFACE>`: network interface used for monitoring
-  * `--cleanup` *(optional)*: removes unnecessary intermediate data generated during execution after the pipeline finishes, keeping only the relevant output artifacts. When enabled, it removes raw artifacts such as `.pcap` and `p0f.raw.txt` at the end of each execution.
-
-* **Operational Requirements:**
-  Clarify why root privileges and promiscuous mode are required:
-
-  * Packet capture requires elevated permissions.
-  * Promiscuous mode allows capturing all traffic on the network segment.
-
-* **Virtual Machine Considerations:**
-  If using a VM, ensure that the hypervisor is configured to allow promiscuous mode on the network interface (e.g., enabling “Allow All” or equivalent settings).
+This artifact accompanies the paper submitted to **SBRC 2026** and targets the SBC reproducibility badges described in [Badges](#badges).
 
 ---
 
-# Overview
+## Table of Contents
 
-IoT-ID implements a hybrid fingerprinting pipeline composed of:
+1. [Overview](#overview)
+2. [Repository Structure](#repository-structure)
+3. [Badges](#badges)
+4. [Requirements](#requirements)
+5. [Installation](#installation)
+6. [Docker](#docker)
+7. [Minimal Working Example](#minimal-working-example)
+8. [Output Artifacts](#output-artifacts)
+9. [Reproducibility and Experiments](#reproducibility-and-experiments)
+10. [SBRC Demonstration Plan](#sbrc-demonstration-plan)
+11. [Security and Ethical Considerations](#security-and-ethical-considerations)
+12. [License](#license)
 
-1. Active scanning using Nmap
-2. Controlled packet capture using dumpcap
-3. TCP SYN probing via nping
-4. Passive fingerprint extraction using p0f
-5. TCP feature extraction from PCAP using tshark
+---
+
+## Overview
+
+IoT-ID implements a hybrid fingerprinting pipeline composed of seven stages:
+
+1. Active scanning using `nmap` (including UPnP discovery)
+2. Controlled packet capture with `dumpcap`
+3. TCP SYN probing via `nping`
+4. Passive fingerprint extraction using `p0f`
+5. TCP feature extraction from PCAP using `tshark`
 6. Canonicalization of stable features
 7. SHA-256 hash generation
 
@@ -66,47 +48,56 @@ The figure below illustrates the four main phases of the pipeline: attribute col
 
 ---
 
-# Repository Structure
+## Repository Structure
 
-- `iot_id_fingerprint.py` → Main fingerprinting pipeline
-- `iot_net_scanner.py` → Network discovery utility
-- `runs/` → Output directory (captures, logs, fingerprints)
-- `requirements.txt` → Python dependencies
-- `README.md` → Documentation
+```
+sbrc26_fingerprint/
+├── iot_id_fingerprint.py     # Main fingerprinting pipeline
+├── iot_net_scanner.py        # Network discovery utility
+├── canonicalize_features.py  # Feature canonicalization module
+├── fingerprint_hash.py       # SHA-256 hashing module
+├── fingerprint_subnet.sh     # Batch script for subnet-wide fingerprinting
+├── requirements.txt          # Python dependencies
+├── testes/                   # Test scripts and validation data
+├── runs/                     # Output directory (created at runtime)
+└── README.md                 # This file
+```
 
 ---
 
-# Badges Considered
+## Badges
 
 This artifact targets the following SBRC badges:
 
-- **Available (SeloD)**
-- **Functional (SeloF)**
-- **Reusable / Sustainable (SeloS)**
-- **Reproducible (SeloR)**
+| Badge | Description |
+|---|---|
+| **Available (SeloD)** | The artifact is publicly available in this repository. |
+| **Functional (SeloF)** | The artifact runs and produces the expected outputs. |
+| **Sustainable (SeloS)** | The code is documented, modular, and can be adapted to other scenarios. |
+| **Reproducible (SeloR)** | Results can be reproduced under the conditions described in [Reproducibility and Experiments](#reproducibility-and-experiments). |
 
 ---
 
-# Basic Information
+## Requirements
 
-## Execution Environment
+### Execution Environment
 
-- OS: Linux (Ubuntu 20.04+ recommended)
-- Python: 3.8+
-- Network: Local network (LAN)
-- Privileges: `sudo` required for packet capture and scanning
+| Component | Specification |
+|---|---|
+| Operating System | Linux (Ubuntu 20.04 LTS or newer recommended) |
+| Python | 3.8 or higher |
+| Network | Local network (LAN) with access to target devices |
+| Privileges | `sudo` required for packet capture and active probing |
 
-## Hardware Requirements
+### Hardware
 
-- CPU: 2+ cores
-- RAM: 4 GB or more
-- Disk: at least 1 GB free
+| Resource | Minimum |
+|---|---|
+| CPU | 2 cores |
+| RAM | 4 GB |
+| Disk | 1 GB free |
 
----
-
-# Dependencies
-
-## System Tools
+### System Dependencies
 
 | Tool | Version | Purpose |
 |---|---|---|
@@ -116,7 +107,9 @@ This artifact targets the following SBRC badges:
 | tshark | 4.4.15 | TCP feature extraction |
 | p0f | 3.09b | Passive fingerprinting |
 
-## Installation (Ubuntu / Debian)
+## Installation
+
+### 1. Install system dependencies (Ubuntu / Debian)
 
 ```bash
 sudo apt update
@@ -125,39 +118,18 @@ sudo apt install -y nmap wireshark-common tshark p0f python3 python3-pip python3
 
 ---
 
-## Python Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-# Security Considerations
-
-⚠️ IoT-ID performs active probing and packet capture.
-
-- Generates TCP SYN traffic
-- Captures network packets (PCAP)
-- May trigger IDS/IPS alerts
-
-Recommendations:
-
-- Use only in controlled environments
-- Do not run on unauthorized networks
-- Ensure compliance with institutional policies
-
----
-
-# Installation
+### 2. Clone the repository
 
 ```bash
 git clone https://github.com/GT-IoTEdu/sbrc26_fingerprint.git
 cd sbrc26_fingerprint
+```
 
+### 3. Set up the Python environment
+
+```bash
 python3 -m venv .venv
 source .venv/bin/activate
-
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -167,7 +139,7 @@ pip install -r requirements.txt
 
 ---
 
-## Running with sudo
+### Running with sudo
 
 Some pipeline stages (packet capture, active scanning) require root privileges.
 Because `sudo` creates a clean session that does not inherit the active virtual
@@ -187,17 +159,17 @@ sudo $(which python3) iot_id_fingerprint.py runs  --seconds 60 --iface
 
 ---
 
-# Docker (Linux)
+## Docker
 
 For Linux environments, you can run IoT-ID inside Docker with host networking and packet-capture capabilities.
 
-## Build
+### Build
 
 ```bash
 docker compose build
 ```
 
-## Run a single target
+### Run a single target
 
 ```bash
 docker compose run --rm fingerprint runs <TARGET_IP> --seconds 60 --iface <INTERFACE> --cleanup
@@ -209,30 +181,29 @@ Example:
 docker compose run --rm fingerprint runs 192.168.1.254 --seconds 60 --iface enp0s3 --cleanup
 ```
 
-## Run subnet orchestrator
+### Run subnet orchestrator
 
 ```bash
 docker compose run --rm --entrypoint bash fingerprint ./fingerprint_subnet.sh -i <INTERFACE> -s 60 --cleanup
 ```
 
-Notes:
-
+**Notes:**
 - `network_mode: host` is required so capture/probing tools can access LAN traffic directly.
 - `NET_ADMIN` and `NET_RAW` capabilities are enabled in `docker-compose.yml`.
 - Output files are persisted in `./runs` on the host.
 
 ---
 
-# Minimal Working Example
+## Minimal Working Example
 
-## How to Find the Network Address of a Device
-
-To discover devices on your local network, run:
+### Step 1 — Discover devices on the local network
 
  ```bash
   sudo python3 iot_net_scanner.py
 ```
-## Expected outputs:
+
+**Expected output:**
+
 ```bash
 [*] Starting Network Scanner...
     (Full network scan)
@@ -250,13 +221,30 @@ IP: 192.168.59.106 | MAC: D0:76:02:F5:81:9C
 ...
 ```
 
-Run a basic fingerprint extraction:
+### Step 2 — Generate a fingerprint for a specific device
 
 ```bash
-sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds 60 --iface <INTERFACE>
+sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds <SECONDS> --iface <INTERFACE>
 ```
 
-## Expected outputs:
+**Parameters:**
+
+| Parameter | Description |
+|---|---|
+| `runs` | Output directory where artifacts will be saved |
+| `<TARGET_IP>` | IP address of the target device |
+| `<SECONDS>` | Duration of passive packet capture |
+| `<INTERFACE>` | Network interface used for monitoring (e.g., `enp0s3`, `eth0`) |
+| `--cleanup` *(optional)* | Removes unnecessary intermediate data generated during execution after the pipeline finishes, keeping only the relevant output artifacts. When enabled, it removes raw artifacts such as `.pcap` and `p0f.raw.txt` at the end of each execution. |
+
+**Example:**
+
+```bash
+sudo python3 iot_id_fingerprint.py runs 192.168.59.106 \
+    --seconds 60 --iface enp0s3
+```
+
+**Expected output:**
 
 ```bash
 VirtualBox:~ sudo python3 iot_id_fingerprint.py runs 192.168.59.106 --seconds 60 --iface enp0s3
@@ -292,50 +280,49 @@ tshark_syn_fallback: 2.01s
 canon_plus_hash   : 0.8 ms
 TOTAL             : 2m 39.10s
 ```
-## Understanding the Generated Data
-- `runs/` — root directory provided to the CLI; contains one subdirectory per execution (`<IP>_timestamp`) with all artifacts generated during that run.
+## Output Artifacts
 
-- `features_canon.json` — human-readable JSON object containing the canonical subset (from `nmap`, `p0f`, and `pcap_syn`, depending on host type and policy).
+Each execution creates a timestamped subdirectory under `runs/` (format: `<IP>_<YYYYMMDD>_<HHMMSS>/`) containing the following files:
 
-- `features_canon.txt` — single-line file containing the **CANON_STRING** (compact JSON, UTF-8) used as input to the hash.
+| File | Description |
+|---|---|
+| `features_canon.json` | Human-readable JSON with the canonical feature subset (from `nmap`, `p0f`, and `pcap_syn`, depending on host type and policy). |
+| `features_canon.txt` | Single-line **CANON_STRING** (compact JSON, UTF-8) used as the input to the hash function. |
+| `fingerprint_sha256.txt` | Single-line SHA-256 fingerprint in lowercase hexadecimal. |
+| `fingerprint_pipeline.log` | Detailed log of pipeline stages, execution times, and errors (for debugging). |
+| `*.pcap` | Raw packet capture file generated during the passive analysis stage. |
 
-- `fingerprint_sha256.txt` — single-line file containing the SHA-256 hash (lowercase hexadecimal) of the canonical string.
-
-- `fingerprint_pipeline.log` — detailed log of pipeline stages, execution times, and errors for debugging purposes.
 ---
 
-# Experiments
+## Reproducibility and Experiments
 
 This section describes how to reproduce the main claims of the paper.
 
 ---
 
-## Claim #1 – Deterministic Fingerprints
+### Claim #1 – Deterministic Fingerprints
 
-**Objective:** Verify fingerprint stability across multiple executions (E.g.5).
+**Objective:** Verify that fingerprint values remain stable across multiple executions on the same device.
 
-### Procedure
-
-# Usage
+**Procedure:**
 
 ```bash
 cd /fingerprint
 chmod +x fingerprint_subnet.sh
 ./fingerprint_subnet.sh
 ```
-# Output
+By default, the script runs **5 fingerprint passes per discovered IP** (each pass produces a distinct timestamped folder). To change the number of passes, use the `-r` option:
 
-The tool generates:
+```bash
+./fingerprint_subnet.sh -r 1   # one pass per host
+./fingerprint_subnet.sh -r 10  # ten passes per host
+```
 
-- PCAP capture
-- `fingerprint.json`
-- Canonical feature representation
-- SHA-256 fingerprint
-- Logs
+**Expected behavior:** Identical SHA-256 fingerprints across all executions for the same device.
 
-By default the script runs **5 fingerprint passes per discovered IP** (folders get distinct timestamps each time). Use `-r N` to change the count (e.g. `-r 1` for a single pass per host).
+### Evaluated Devices
 
-The table presents the devices evaluated in the study, including their categories, manufacturers, models, and the respective quantities used in the tests.
+The table presents the devices evaluated in the original study, including their categories, manufacturers, models, and the respective quantities used in the tests.
 
 | Device        | Manufacturer         | Model                      | Qty. |
 |---------------|----------------------|----------------------------|------|
@@ -352,9 +339,7 @@ The table presents the devices evaluated in the study, including their categorie
 | TV Box        | Xiaomi               | MiTV-AESP0                 | 1    |
 | Wi-Fi Printer | HP                   | Deskjet 4640               | 1    |
 
-### Result Fingerprint
-
-- Identical SHA-256 fingerprints across runs
+### Reference Fingerprints
 
 | Device                     | SHA-256 Fingerprint                                              |
 |----------------------------|------------------------------------------------------------------|
@@ -375,14 +360,11 @@ The table presents the devices evaluated in the study, including their categorie
 | IP Camera Model B          | 5b60133e2971f571f7a4ceadd55041a78771b65189e64c0f891eb687ab37bc74 |
 ---
 
-
-### Expected Result
-
-- Identical SHA-256 fingerprints across executions for the same device
+Note that **identical models produce identical fingerprints** (e.g., the three TP-Link C500 cameras and the two Samsung UN32J4303 TVs), which empirically supports the determinism claim.
 
 ---
 
-## Claim #2 – Cross-Device Collision Resolution via L7 Attributes
+### Claim #2 – Cross-Device Collision Resolution via L7 Attributes
 
 **Objective:** Verify that IoT-ID can distinguish devices with identical L3/L4
 signatures by incorporating application-layer (L7) metadata collected via
@@ -394,12 +376,12 @@ traditional passive fingerprinting, these devices would be indistinguishable.
 IoT-ID resolves the ambiguity by incorporating `manufacturer` and `model_name`
 via UPnP.
 
-### Prerequisites
+**Prerequisites**
 
 - Two or more devices with similar TCP/IP stacks available on the local network
 - Environment configured as described in the **Installation** section
 
-### Procedure
+**Procedure**
 
 **Step 1 — Collect the fingerprint of the first device:**
 
@@ -427,7 +409,7 @@ cat runs/<IP_DEVICE_A>_*/fingerprint_sha256.txt
 cat runs/<IP_DEVICE_B>_*/fingerprint_sha256.txt
 ```
 
-### Expected Result
+**Expected Result:**
 
 The `features_canon.txt` files for both devices should show identical or very
 similar L3/L4 values (`mss`, `ttl`, `window_size`), but **distinct canon strings**
@@ -445,43 +427,72 @@ Example extracted from the paper (Tables 4 and 5):
 Despite identical L3/L4 attributes, the three devices produce distinct fingerprints
 thanks to the L7 metadata collected via UPnP.
 
-### Estimated Execution Time
 
-~3 minutes per device (dominated by the 60s capture window and nmap scan).
+### Reproducibility Notes
 
-### Expected Resource Usage
+Strict reproducibility in this artifact depends on the availability of the **same physical IoT devices**, which cannot be perfectly replicated across different environments. For this reason, two complementary modes of reproducibility are supported:
 
-~200 MB RAM, ~50 MB disk per execution (PCAP + bundle).
+1. **Strict reproducibility:** Achievable only when the exact same devices, with the same firmware versions, are tested. In this case, the SHA-256 hashes listed above must match exactly.
+2. **Functional and comparative reproducibility:** Achievable in any environment with networked devices. The user can validate the following expected behaviors:
+   - The same device produces a **stable fingerprint** across multiple runs.
+   - **Different devices** produce **distinct fingerprints**.
+   - **Identical device models** produce **identical fingerprints**.
 
-
-# Reproducibility Notes
-
-- Experiments should be executed in a stable network environment  
-- Device activity may influence captured traffic  
-- It is recommended to repeat experiments under similar network conditions  
-- To obtain the same SHA-256 fingerprint, the device must have identical hardware and software configurations, as listed in the device table.
----
-
-Full reproducibility, in the strict sense, is not entirely achievable in this context, as the experiments depend on **physical IoT devices**, which cannot be perfectly replicated across different environments. Identical fingerprints can only be reproduced when using the **same devices**.
-
-To address this limitation, the following validation strategy is adopted:
-
-- Use available IoT or networked devices in the local network  
-- Ensure devices are **network-visible**  
-- Execute the IoT-ID pipeline across multiple devices  
-
-Expected behavior:
-
-- The same device produces a **stable fingerprint**  
-- Different devices produce **distinct fingerprints**  
-
-This approach ensures **functional and comparative reproducibility**, even without identical hardware.
+For best results, experiments should be conducted in a stable network environment, since intense or anomalous traffic may temporarily affect captured features.
 
 ---
 
-# LICENSE
+## SBRC Demonstration Plan
+
+This section describes the requirements and planning for the SBRC demonstration, including the necessary setup to effectively showcase the tool.
+
+### Lab Setup
+
+* A Linux machine or Linux virtual machine (with bridged networking, when applicable) connected to the same subnet as the target devices.
+* Devices available on the same LAN (e.g., smart TVs, IoT devices), preferably active during the demonstration.
+* All system and Python dependencies installed (see [Requirements](#requirements)).
+* `sudo` privileges for packet capture and active probing.
+
+### Demonstration Flow
+
+1. **Network discovery:** Identify active devices using `iot_net_scanner.py`, either across the entire network or targeting a specific IP range.
+
+2. **Fingerprint generation:** Execute the fingerprinting pipeline against a selected device using:
+  `sudo python3 iot_id_fingerprint.py runs <TARGET_IP> --seconds <SECONDS> --iface <INTERFACE>`
+
+  Each parameter is explained in [Quick Start](#quick-start-minimal-working-example).
+
+3. **Determinism check:** Run the pipeline a second time on the same device and compare the resulting SHA-256 hash.
+   
+4. **Comparative analysis:** Run the pipeline on a different device and show that the fingerprint differs.
+
+### Notes for Virtualized Environments
+  When running inside a virtual machine, the hypervisor must be configured to allow **promiscuous mode** on the network interface (e.g., the "Allow All" setting in VirtualBox, or equivalent in VMware). Without this, packet capture and passive fingerprinting will not work correctly.
+
+Promiscuous mode and `sudo` are required because:
+- Raw packet capture requires elevated privileges.
+- Promiscuous mode allows the interface to capture all traffic on the network segment, not only frames addressed to the host.
+
+---
+
+## Security and Ethical Considerations
+
+⚠️ **IoT-ID performs active probing and packet capture.** Use it responsibly.
+
+The tool generates TCP SYN traffic, captures network packets (PCAP), and may trigger IDS/IPS alerts on managed networks.
+
+**Recommended practices:**
+
+- Use the tool **only in controlled and authorized environments**.
+- **Do not run** the tool on networks for which you do not have explicit authorization.
+- Ensure compliance with institutional and legal policies regarding network monitoring.
+- Treat captured PCAP files as potentially sensitive data.
+
+---
+
+## LICENSE
 
 Copyright (c) 2025 RNP – National Research and Education Network (Brazil)
 
-This code was developed under the Hackers do Bem Program and is licensed under the terms of the BSD License. It may be freely used, modified, and distributed, including for commercial purposes, provided that this copyright notice is retained.
+This code was developed under the *Hackers do Bem* Program and is licensed under the terms of the **BSD License**. It may be freely used, modified, and distributed, including for commercial purposes, provided that this copyright notice is retained.
 This software is provided "as is", without any warranty, express or implied, including, but not limited to, warranties of merchantability or fitness for a particular purpose. RNP and the authors shall not be held liable for any damages or losses arising from the use of this software.
