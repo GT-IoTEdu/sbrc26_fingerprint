@@ -322,6 +322,10 @@ Each execution creates a timestamped subdirectory under `runs/` (format: `<IP>_<
 | `fingerprint_pipeline.log` | Detailed log of pipeline stages, execution times, and errors (for debugging). |
 | `*.pcap` | Raw packet capture file generated during the passive analysis stage. |
 
+> **Mapping to paper tables:** The fields present in `features_canon.txt`
+> (`manufacturer`, `model_name`, `mss`, `ttl`, `window_size`) correspond
+> directly to the attribute columns in Table 4 of the paper. The hash in
+> `fingerprint_sha256.txt` corresponds to the SHA-256 column in Table 5.
 ---
 
 ## Reproducibility and Experiments
