@@ -1,36 +1,25 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-import subprocess
+"""
+iot_net_scanner.py
+
+Utilitário de inventário de rede: descobre dispositivos via SSDP/UPnP + Nmap e
+cruza com a tabela ARP local para listar IP, MAC, fabricante e modelo.
+
+Ferramenta independente do pipeline de fingerprint. Partilha a descoberta
+UPnP/SSDP de baixo nível (`iotid.upnp`), mas mantém a sua própria varredura Nmap
+(modo broadcast / sem sudo) e o seu esquema de saída (chave "model", campo UDN).
+"""
+
+from __future__ import annotations
+
 import re
-import socket
-import json
-import requests
+import subprocess
 import sys
-import xml.etree.ElementTree as ET
 
-# --- Configurações ---
-SSDP_TIMEOUT = 2.0
+from iotid.upnp import fetch_upnp_raw, ssdp_probe
 
-def fetch_upnp_description(url):
-    """Extrai detalhes do XML de localização do dispositivo."""
-    try:
-        r = requests.get(url, timeout=1.5)
-        if r.status_code != 200: return None
-        
-        root = ET.fromstring(r.content)
-        ns = {'ns': 'urn:schemas-upnp-org:device-1-0'}
-        device = root.find('ns:device', ns)
-        
-        if device is not None:
-            return {
-                "friendlyName": device.findtext('ns:friendlyName', '', ns),
-                "manufacturer": device.findtext('ns:manufacturer', '', ns),
-                "modelName": device.findtext('ns:modelName', '', ns),
-                "udn": device.findtext('ns:UDN', '', ns)
-            }
-    except:
-        pass
-    return None
 
 def nmap_upnp_scan(target=None):
     """Executa o Nmap focado no script de UPnP."""
@@ -41,17 +30,17 @@ def nmap_upnp_scan(target=None):
         else:
             # Para rede inteira, o broadcast é mais rápido
             cmd = ["nmap", "-T4", "--script", "broadcast-upnp-info"]
-            
+
         out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
-    except:
+    except Exception:
         return {}
 
     devices = {}
     current_ip = target if target else None
-    
+
     for line in out.splitlines():
         line = line.strip()
-        
+
         if not target:
             ip_match = re.search(r"Location:.*http://([\d\.]+):", line)
             if ip_match:
@@ -67,35 +56,6 @@ def nmap_upnp_scan(target=None):
             if "Name:" in line: devices[current_ip]["name"] = line.split("Name:")[-1].strip()
     return devices
 
-def ssdp_probe(target=None):
-    """Descoberta rápida via multicast UDP."""
-    msg = '\r\n'.join([
-        'M-SEARCH * HTTP/1.1', 'HOST:239.255.255.250:1900',
-        'MAN:"ssdp:discover"', 'MX:2', 'ST:ssdp:all', '', ''
-    ]).encode()
-
-    results = {}
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(SSDP_TIMEOUT)
-    try:
-        sock.sendto(msg, ('239.255.255.250', 1900))
-        while True:
-            try:
-                data, addr = sock.recvfrom(2048)
-                ip, content = addr[0], data.decode(errors='ignore')
-                
-                if target and ip != target: continue
-
-                loc = re.search(r"LOCATION:\s*(http://[^\r\n]+)", content, re.IGNORECASE)
-                srv = re.search(r"SERVER:\s*([^\r\n]+)", content, re.IGNORECASE)
-                
-                if ip not in results: results[ip] = {"locs": set(), "srv": None}
-                if loc: results[ip]["locs"].add(loc.group(1).strip())
-                if srv: results[ip]["srv"] = srv.group(1).strip()
-            except socket.timeout: break
-    finally:
-        sock.close()
-    return results
 
 def get_arp_table():
     """Mapeia IPs e MACs locais."""
@@ -106,8 +66,10 @@ def get_arp_table():
             ip = re.search(r"(\d+\.\d+\.\d+\.\d+)", line)
             mac = re.search(r"([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}", line)
             if ip and mac: table[ip.group(1)] = mac.group(0).upper()
-    except: pass
+    except Exception:
+        pass
     return table
+
 
 def main():
     target_ip = sys.argv[1] if len(sys.argv) > 1 else None
@@ -116,16 +78,16 @@ def main():
     print("[*] Iniciando Scanner de Rede...")
     print(f"    ({alvo_txt})")
 
-    ssdp_raw = ssdp_probe(target_ip)
+    ssdp_raw = ssdp_probe(target_ip, recv_bufsize=2048)
     nmap_raw = nmap_upnp_scan(target_ip)
     arp_table = get_arp_table()
 
     if target_ip:
         all_ips = [target_ip]
     else:
-        all_ips = sorted(set(ssdp_raw.keys()) | set(nmap_raw.keys()) | set(arp_table.keys()), 
+        all_ips = sorted(set(ssdp_raw.keys()) | set(nmap_raw.keys()) | set(arp_table.keys()),
                         key=lambda x: list(map(int, x.split('.'))))
-    
+
     print("\n" + "=" * 65 + "\nINVENTÁRIO DE DISPOSITIVOS\n" + "=" * 65)
 
     for ip in all_ips:
@@ -145,14 +107,14 @@ def main():
         # Processamento SSDP e XML com filtro de prioridade
         if ip in ssdp_raw:
             if not res["server"]: res["server"] = ssdp_raw[ip]["srv"]
-            
+
             for url in ssdp_raw[ip]["locs"]:
-                xml = fetch_upnp_description(url)
+                xml = fetch_upnp_raw(url)
                 if xml:
                     # Se o XML for genérico (Microsoft/DLNA), só usamos se não tivermos nada melhor
                     is_generic = "Microsoft" in (xml.get("manufacturer") or "") or \
                                  "Windows Media Player" in (xml.get("modelName") or "")
-                    
+
                     if not is_generic or res["manufacturer"] == "Unknown":
                         res["udn"] = xml.get("udn", res["udn"])
                         if not res["name"]: res["name"] = xml.get("friendlyName")
@@ -168,6 +130,7 @@ def main():
         if res['udn']: print(f"   UDN: {res['udn']}")
         if res['server']: print(f"   SERVER: {res['server']}")
         print("-" * 50)
+
 
 if __name__ == "__main__":
     main()

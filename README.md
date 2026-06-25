@@ -52,10 +52,18 @@ The figure below illustrates the four main phases of the pipeline: attribute col
 
 ```
 sbrc26_fingerprint/
-├── iot_id_fingerprint.py     # Main fingerprinting pipeline
+├── iot_id_fingerprint.py     # Main pipeline entry point (CLI: target/network modes)
 ├── iot_net_scanner.py        # Network discovery utility
 ├── canonicalize_features.py  # Feature canonicalization module
 ├── fingerprint_hash.py       # SHA-256 hashing module
+├── iotid/                    # Internal package used by the entry points
+│   ├── proc.py               # Subprocess execution and byte decoding
+│   ├── artifacts.py          # File writing, time formatting, logging, WSL paths
+│   ├── upnp.py               # Shared UPnP/SSDP discovery (scanner + pipeline)
+│   ├── p0f.py                # p0f raw output parsing and feature extraction
+│   ├── tshark.py             # TCP feature and passive-clue extraction via tshark
+│   ├── discovery.py          # nmap/UPnP identity and host_kind classification
+│   └── pipeline.py           # Single-host fingerprint orchestration
 ├── fingerprint_subnet.sh     # Batch script for subnet-wide fingerprinting
 ├── requirements.txt          # Python dependencies
 ├── Dockerfile                # Container image definition

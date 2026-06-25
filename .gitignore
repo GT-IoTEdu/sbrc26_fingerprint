@@ -1,0 +1,6 @@
+# Bytecode / cache
+__pycache__/
+*.py[cod]
+
+# Output directory criado em runtime
+runs/

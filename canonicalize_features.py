@@ -103,6 +103,14 @@ def dumps_canon(obj: Dict[str, Any]) -> str:
     return json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
+# Campos do pcap_syn que entram no hash, por tipo de host. As chaves são
+# ordenadas na serialização (sort_keys=True), logo a ordem aqui é irrelevante.
+_PCAP_SYN_FIELDS = {
+    "mobile": ("mss", "sack_perm", "ts_present", "ttl", "window_size", "ws"),
+    "iot": ("ttl", "window_size", "mss", "ws"),
+}
+
+
 def _resolve_host_kind(bundle: Dict[str, Any], nmap: Dict[str, Any]) -> str:
     meta = bundle.get("meta") if isinstance(bundle.get("meta"), dict) else {}
     hk = meta.get("host_kind")
@@ -205,26 +213,8 @@ def build_canon(bundle: Dict[str, Any], policy: str) -> Dict[str, Any]:
     pcap_syn_canon = None
 
     if pcap_syn and not pcap_syn.get("error"):
-        if host_kind == "mobile":
-            pcap_syn_canon = prune_none(
-                {
-                    "mss": stable_str(pcap_syn.get("mss")),
-                    "sack_perm": stable_str(pcap_syn.get("sack_perm")),
-                    "ts_present": stable_str(pcap_syn.get("ts_present")),
-                    "ttl": stable_str(pcap_syn.get("ttl")),
-                    "window_size": stable_str(pcap_syn.get("window_size")),
-                    "ws": stable_str(pcap_syn.get("ws")),
-                }
-            )
-        else:
-            pcap_syn_canon = prune_none(
-                {
-                    "ttl": stable_str(pcap_syn.get("ttl")),
-                    "window_size": stable_str(pcap_syn.get("window_size")),
-                    "mss": stable_str(pcap_syn.get("mss")),
-                    "ws": stable_str(pcap_syn.get("ws")),
-                }
-            )
+        fields = _PCAP_SYN_FIELDS["mobile" if host_kind == "mobile" else "iot"]
+        pcap_syn_canon = prune_none({k: stable_str(pcap_syn.get(k)) for k in fields})
         _LOG.info(
             "build_canon pcap_syn host_kind=%s keys=%s",
             host_kind,
