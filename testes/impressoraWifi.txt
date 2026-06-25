@@ -1,0 +1,140 @@
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.108 --seconds 60 --iface ens33 
+[sudo] password for anna: 
+[*] Running Nmap (alvo 192.168.1.108) ... 
+[*] No UPnP identity fields detected.
+[*] Sem identidade IoT/UPnP (fabricante/modelo) — classificação: mobile; SHA-256: apenas p0f (SYN cliente) + pcap_syn (MSS/opções TCP/TTL/janela). (DHCP/nmap extra ficam só no fingerprint.json para estudo.)
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+[*] Modo mobile: extraindo DHCP/HTTP/TLS/mDNS + nmap (só JSON; SHA só p0f+pcap_syn) ...
+
+=== CANON_STRING ===
+{"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*12,0:mss:0","4:64+0:0:1460:mss*6,0:mss:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"8760"}}
+
+=== FINGERPRINT_HASH ===
+93ef878c8f2de4eab5a5c780b1dc146d28df337116d8e93019bd9f4cc78c41df
+
+[OK] Saved:
+  runs/192.168.1.108_20260326_111510/features_canon.json 
+  runs/192.168.1.108_20260326_111510/features_canon.txt 
+  runs/192.168.1.108_20260326_111510/fingerprint_sha256.txt 
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.108_20260326_111510 
+
+[OK] Log de pipeline: runs/192.168.1.108_20260326_111510/fingerprint_pipeline.log 
+
+=== TIMING (rodada) ===
+nmap               : 3m 23.24s
+dumpcap_capture    : 1m 00.40s
+nping_probe        : 29.23s
+p0f_native         : 13.7 ms
+tshark_syn_fallback: 507.0 ms
+canon_plus_hash    : 0.4 ms
+TOTAL              : 4m 24.17s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.108 --seconds 60 --iface ens33 
+[*] Running Nmap (alvo 192.168.1.108) ... 
+[*] No UPnP identity fields detected.
+[*] Sem identidade IoT/UPnP (fabricante/modelo) — classificação: mobile; SHA-256: apenas p0f (SYN cliente) + pcap_syn (MSS/opções TCP/TTL/janela). (DHCP/nmap extra ficam só no fingerprint.json para estudo.)
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+[*] Modo mobile: extraindo DHCP/HTTP/TLS/mDNS + nmap (só JSON; SHA só p0f+pcap_syn) ...
+
+=== CANON_STRING ===
+{"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*12,0:mss:0","4:64+0:0:1460:mss*6,0:mss:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"8760"}}
+
+=== FINGERPRINT_HASH ===
+93ef878c8f2de4eab5a5c780b1dc146d28df337116d8e93019bd9f4cc78c41df
+
+[OK] Saved:
+  runs/192.168.1.108_20260326_112006/features_canon.json 
+  runs/192.168.1.108_20260326_112006/features_canon.txt 
+  runs/192.168.1.108_20260326_112006/fingerprint_sha256.txt 
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.108_20260326_112006 
+
+[OK] Log de pipeline: runs/192.168.1.108_20260326_112006/fingerprint_pipeline.log 
+
+=== TIMING (rodada) ===
+nmap               : 46.72s
+dumpcap_capture    : 1m 00.28s
+nping_probe        : 14.05s
+p0f_native         : 13.1 ms
+tshark_syn_fallback: 405.2 ms
+canon_plus_hash    : 0.4 ms
+TOTAL              : 2m 01.87s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.108 --seconds 60 --iface ens33 
+[*] Running Nmap (alvo 192.168.1.108) ... 
+[*] No UPnP identity fields detected.
+[*] Sem identidade IoT/UPnP (fabricante/modelo) — classificação: mobile; SHA-256: apenas p0f (SYN cliente) + pcap_syn (MSS/opções TCP/TTL/janela). (DHCP/nmap extra ficam só no fingerprint.json para estudo.)
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+[*] Modo mobile: extraindo DHCP/HTTP/TLS/mDNS + nmap (só JSON; SHA só p0f+pcap_syn) ...
+
+=== CANON_STRING ===
+{"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*12,0:mss:0","4:64+0:0:1460:mss*6,0:mss:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"8760"}}
+
+=== FINGERPRINT_HASH ===
+93ef878c8f2de4eab5a5c780b1dc146d28df337116d8e93019bd9f4cc78c41df
+
+[OK] Saved:
+  runs/192.168.1.108_20260326_113211/features_canon.json 
+  runs/192.168.1.108_20260326_113211/features_canon.txt 
+  runs/192.168.1.108_20260326_113211/fingerprint_sha256.txt 
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.108_20260326_113211 
+
+[OK] Log de pipeline: runs/192.168.1.108_20260326_113211/fingerprint_pipeline.log 
+
+=== TIMING (rodada) ===
+nmap               : 1m 15.92s
+dumpcap_capture    : 1m 00.22s
+nping_probe        : 17.03s
+p0f_native         : 11.8 ms
+tshark_syn_fallback: 389.7 ms
+canon_plus_hash    : 0.3 ms
+TOTAL              : 2m 33.85s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.108 --seconds 60 --iface ens33 
+[*] Running Nmap (alvo 192.168.1.108) ... 
+[*] No UPnP identity fields detected.
+[*] Sem identidade IoT/UPnP (fabricante/modelo) — classificação: mobile; SHA-256: apenas p0f (SYN cliente) + pcap_syn (MSS/opções TCP/TTL/janela). (DHCP/nmap extra ficam só no fingerprint.json para estudo.)
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+[*] Modo mobile: extraindo DHCP/HTTP/TLS/mDNS + nmap (só JSON; SHA só p0f+pcap_syn) ...
+
+=== CANON_STRING ===
+{"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*12,0:mss:0","4:64+0:0:1460:mss*6,0:mss:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"8760"}}
+
+=== FINGERPRINT_HASH ===
+93ef878c8f2de4eab5a5c780b1dc146d28df337116d8e93019bd9f4cc78c41df
+
+[OK] Saved:
+  runs/192.168.1.108_20260326_113710/features_canon.json 
+  runs/192.168.1.108_20260326_113710/features_canon.txt 
+  runs/192.168.1.108_20260326_113710/fingerprint_sha256.txt 
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.108_20260326_113710 
+
+[OK] Log de pipeline: runs/192.168.1.108_20260326_113710/fingerprint_pipeline.log 
+
+=== TIMING (rodada) ===
+nmap               : 42.18s
+dumpcap_capture    : 1m 00.21s
+nping_probe        : 13.47s
+p0f_native         : 12.6 ms
+tshark_syn_fallback: 398.5 ms
+canon_plus_hash    : 0.3 ms
+TOTAL              : 1m 57.34s

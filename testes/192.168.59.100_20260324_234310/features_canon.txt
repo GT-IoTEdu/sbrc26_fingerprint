@@ -1,0 +1,1 @@
+{"p0f":{"extracted":{"client_syn_raw_sig_set":["4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535","ws":"10"}}

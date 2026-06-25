@@ -1,0 +1,13 @@
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2026-03-24 21:59 -03
+Nmap scan report for 192.168.59.106
+Host is up (0.0027s latency).
+Not shown: 996 closed tcp ports (reset)
+PORT     STATE SERVICE         VERSION
+8008/tcp open  http?
+8009/tcp open  ssl/castv2      Ninja Sphere Chromecast driver
+8443/tcp open  ssl/https-alt?
+9000/tcp open  ssl/cslistener?
+MAC Address: D0:76:02:F5:81:9C (Unknown)
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 95.16 seconds

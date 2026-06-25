@@ -1,0 +1,35 @@
+2026-03-24T23:43:10 INFO [fingerprint.pipeline] === run start ip=192.168.59.100 ts=20260324_234310 mode=target canon_policy=stable log_level=DEBUG ===
+2026-03-24T23:43:10 DEBUG [fingerprint.pipeline] args seconds=60 iface=enp0s3 probe_count=3 probe_delay=2.0 wsl_distro=None dumpcap_path=dumpcap
+2026-03-24T23:43:10 INFO [fingerprint.pipeline] STAGE nmap_upnp START
+2026-03-24T23:43:34 INFO [fingerprint.pipeline] STAGE nmap_upnp END elapsed=24.17s server=None name=None manufacturer=None model_name=None
+2026-03-24T23:43:34 DEBUG [fingerprint.pipeline] nmap_upnp stdout_chars=436
+2026-03-24T23:43:34 INFO [fingerprint.pipeline] STAGE pcap_capture START duration_s=60 filter_host=192.168.59.100
+2026-03-24T23:43:34 DEBUG [fingerprint.pipeline] dumpcap_cmd=dumpcap -i enp0s3 -w runs/192.168.59.100_20260324_234310/pcaps/capture_192.168.59.100_20260324_234310.pcap -a duration:60 -f host 192.168.59.100
+2026-03-24T23:43:36 INFO [fingerprint.pipeline] STAGE nping_probe cmd=nping --tcp -p 80,443,22,445,139,3389,8080,8443,9100,5357 --flags syn --count 3 192.168.59.100
+2026-03-24T23:44:06 DEBUG [fingerprint.pipeline] nping rc_ok stdout_chars=6526 stderr_chars=0
+2026-03-24T23:44:35 INFO [fingerprint.pipeline] STAGE pcap_capture END elapsed=1m 00.27s pcap_path=runs/192.168.59.100_20260324_234310/pcaps/capture_192.168.59.100_20260324_234310.pcap size_bytes=29561948
+2026-03-24T23:44:35 INFO [fingerprint.pipeline] STAGE p0f START
+2026-03-24T23:44:35 DEBUG [fingerprint.pipeline] p0f_cmd=p0f -r /home/carregando/fullprint/runs/192.168.59.100_20260324_234310/pcaps/capture_192.168.59.100_20260324_234310.pcap
+2026-03-24T23:44:35 INFO [fingerprint.pipeline] STAGE p0f parse summary processed_packets=246 blocks_count=67 warnings=0
+2026-03-24T23:44:35 INFO [fingerprint.p0f_extract] extract_p0f_sets target=192.168.59.100 client_syn=1 server_synack=0 client_mtu=1 server_mtu=0
+2026-03-24T23:44:35 DEBUG [fingerprint.p0f_extract] extract_p0f_sets client_syn_raw_sig_set=['4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0']
+2026-03-24T23:44:35 DEBUG [fingerprint.p0f_extract] extract_p0f_sets server_synack_raw_sig_set=[]
+2026-03-24T23:44:35 INFO [fingerprint.pipeline] STAGE tshark_syn_fallback START
+2026-03-24T23:44:35 INFO [fingerprint.tshark] tshark start pcap=runs/192.168.59.100_20260324_234310/pcaps/capture_192.168.59.100_20260324_234310.pcap size_bytes=29561948 ip=192.168.59.100
+2026-03-24T23:44:37 DEBUG [fingerprint.tshark] tshark try_filter no rows rc=0 filter=ip.src==192.168.59.100 && tcp.flags.syn==1 && tcp.flags.ack==1
+2026-03-24T23:44:39 INFO [fingerprint.tshark] tshark try_filter filter=ip.src==192.168.59.100 && tcp.flags.syn==1 && tcp.flags.ack==0 matching_lines=7 first_row='64\t65535\t1460\t10\t0402\t080a8aea1b0500000000'
+2026-03-24T23:44:41 DEBUG [fingerprint.tshark] tshark parsed fields ttl=64 win=65535 mss=1460 ws=10 opts=None
+2026-03-24T23:44:41 INFO [fingerprint.tshark] tshark done chosen_filter=ip.src==192.168.59.100 && tcp.flags.syn==1 && tcp.flags.ack==0 ttl=64 window_size=65535 mss=1460 ws=10 options_order=None
+2026-03-24T23:44:41 INFO [fingerprint.pipeline] STAGE tshark_syn_fallback END elapsed=6.31s pcap_syn={"chosen_filter": "ip.src==192.168.59.100 && tcp.flags.syn==1 && tcp.flags.ack==0", "filters_tried": ["ip.src==192.168.59.100 && tcp.flags.syn==1 && tcp.flags.ack==1", "ip.src==192.168.59.100 && tcp.flags.syn==1 && tcp.flags.ack==0"], "mss": "1460", "options_order": null, "sack_perm": "0402", "source": "tshark_syn_fallback", "ts_present": "1", "tshark_stderr": "Running as user \"root\" and group \"root\". This could be dangerous.\nRunning as user \"root\" and group \"root\". This could be dangerous.\nRunning as user \"root\" and group \"root\". This could be dangerous.", "ttl": "64", "window_size": "65535", "ws": "10"}
+2026-03-24T23:44:41 INFO [fingerprint.pipeline] STAGE bundle_json written path=runs/192.168.59.100_20260324_234310/fingerprint.json
+2026-03-24T23:44:41 INFO [fingerprint.pipeline] STAGE canon_hash START policy=stable
+2026-03-24T23:44:41 INFO [fingerprint.canon] build_canon start policy=stable top_level_keys=['meta', 'nmap', 'p0f', 'paths', 'pcap_syn']
+2026-03-24T23:44:41 DEBUG [fingerprint.canon] build_canon nmap_raw fields_present server=False name=False manufacturer=False model_name=False
+2026-03-24T23:44:41 INFO [fingerprint.canon] build_canon p0f branch=client_syn (no server_synack) count=1
+2026-03-24T23:44:41 INFO [fingerprint.canon] build_canon pcap_syn included keys=['mss', 'ttl', 'window_size', 'ws']
+2026-03-24T23:44:41 INFO [fingerprint.canon] build_canon result_sections=['p0f', 'pcap_syn']
+2026-03-24T23:44:41 DEBUG [fingerprint.canon] build_canon section p0f = {"extracted": {"client_syn_raw_sig_set": ["4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0"]}}
+2026-03-24T23:44:41 DEBUG [fingerprint.canon] build_canon section pcap_syn = {"mss": "1460", "ttl": "64", "window_size": "65535", "ws": "10"}
+2026-03-24T23:44:41 INFO [fingerprint.pipeline] STAGE canon_hash OK canon_str_len=171 sha256=8ebcb041d17976e1d500e67cdf450b0e9d77639efa90d3b4dc781646404a23ce
+2026-03-24T23:44:41 DEBUG [fingerprint.pipeline] CANON_STRING={"p0f":{"extracted":{"client_syn_raw_sig_set":["4:64+0:0:1460:65535,10:mss,sok,ts,nop,ws:df,id+:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"65535","ws":"10"}}
+2026-03-24T23:44:41 INFO [fingerprint.pipeline] === run end total=1m 30.81s tmarks={'nmap': '24.17s', 'nping_probe': '29.20s', 'dumpcap_capture': '1m 00.27s', 'p0f_native': '41.5 ms', 'tshark_syn_fallback': '6.31s', 'canon_plus_hash': '0.8 ms'} log_file=runs/192.168.59.100_20260324_234310/fingerprint_pipeline.log ===

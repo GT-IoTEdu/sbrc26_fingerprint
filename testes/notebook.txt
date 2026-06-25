@@ -1,0 +1,174 @@
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.101 --seconds 60 --iface ens33
+[*] Running Nmap (alvo 192.168.1.101) ...
+[*] No UPnP identity fields detected.
+[*] Sem identidade IoT/UPnP (fabricante/modelo) — classificação: mobile; SHA-256: apenas p0f (SYN cliente) + pcap_syn (MSS/opções TCP/TTL/janela). (DHCP/nmap extra ficam só no fingerprint.json para estudo.)
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+[*] Modo mobile: extraindo DHCP/HTTP/TLS/mDNS + nmap (só JSON; SHA só p0f+pcap_syn) ...
+
+=== CANON_STRING ===
+{"p0f":{"extracted":{"server_synack_raw_sig_set":["4:128+0:0:1460:65535,0:mss:df,id+:0","4:128+0:0:1460:8192,0:mss:df,id+:0"]}},"pcap_syn":{"mss":"1460","ttl":"128","window_size":"8192"}}
+
+=== FINGERPRINT_HASH ===
+4d5f53f2b806854f304a076fc351b9cd3b78476a07129b91676364f746568836
+
+[OK] Saved:
+  runs/192.168.1.101_20260325_163010/features_canon.json
+  runs/192.168.1.101_20260325_163010/features_canon.txt
+  runs/192.168.1.101_20260325_163010/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.101_20260325_163010
+
+[OK] Log de pipeline: runs/192.168.1.101_20260325_163010/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 15.01s
+dumpcap_capture   : 1m 00.08s
+nping_probe       : 30.14s
+p0f_native        : 4.9 ms
+tshark_syn_fallback: 423.6 ms
+canon_plus_hash   : 1.4 ms
+TOTAL             : 1m 15.52s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.101 --seconds 60 --iface ens33
+[*] Running Nmap (alvo 192.168.1.101) ...
+[*] No UPnP identity fields detected.
+[*] Sem identidade IoT/UPnP (fabricante/modelo) — classificação: mobile; SHA-256: apenas p0f + pcap_syn (MSS/opções TCP/TTL/janela). (DHCP/nmap extra ficam só no fingerprint.json para estudo.)
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+[*] Modo mobile: extraindo DHCP/HTTP/TLS/mDNS + nmap (só JSON; SHA só p0f+pcap_syn) ...
+
+=== CANON_STRING ===
+{"p0f":{"extracted":{"server_synack_raw_sig_set":["4:128+0:0:1460:65535,0:mss:df,id+:0","4:128+0:0:1460:8192,0:mss:df,id+:0"]}},"pcap_syn":{"mss":"1460","ttl":"128","window_size":"8192"}}
+
+=== FINGERPRINT_HASH ===
+4d5f53f2b806854f304a076fc351b9cd3b78476a07129b91676364f746568836
+
+[OK] Saved:
+  runs/192.168.1.101_20260325_163510/features_canon.json
+  runs/192.168.1.101_20260325_163510/features_canon.txt
+  runs/192.168.1.101_20260325_163510/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.101_20260325_163510
+
+[OK] Log de pipeline: runs/192.168.1.101_20260325_163510/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 14.88s
+dumpcap_capture   : 1m 00.11s
+nping_probe       : 29.94s
+p0f_native        : 5.2 ms
+tshark_syn_fallback: 401.7 ms
+canon_plus_hash   : 1.2 ms
+TOTAL             : 1m 15.34s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.101 --seconds 60 --iface ens33
+[*] Running Nmap (alvo 192.168.1.101) ...
+[*] No UPnP identity fields detected.
+[*] Sem identidade IoT/UPnP (fabricante/modelo) — classificação: mobile; SHA-256: apenas p0f + pcap_syn (MSS/opções TCP/TTL/janela). (DHCP/nmap extra ficam só no fingerprint.json para estudo.)
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+[*] Modo mobile: extraindo DHCP/HTTP/TLS/mDNS + nmap (só JSON; SHA só p0f+pcap_syn) ...
+
+=== CANON_STRING ===
+{"p0f":{"extracted":{"server_synack_raw_sig_set":["4:128+0:0:1460:65535,0:mss:df,id+:0","4:128+0:0:1460:8192,0:mss:df,id+:0"]}},"pcap_syn":{"mss":"1460","ttl":"128","window_size":"8192"}}
+
+=== FINGERPRINT_HASH ===
+4d5f53f2b806854f304a076fc351b9cd3b78476a07129b91676364f746568836
+
+[OK] Saved:
+  runs/192.168.1.101_20260325_164010/features_canon.json
+  runs/192.168.1.101_20260325_164010/features_canon.txt
+  runs/192.168.1.101_20260325_164010/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.101_20260325_164010
+
+[OK] Log de pipeline: runs/192.168.1.101_20260325_164010/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 15.27s
+dumpcap_capture   : 1m 00.06s
+nping_probe       : 30.21s
+p0f_native        : 4.8 ms
+tshark_syn_fallback: 438.9 ms
+canon_plus_hash   : 1.5 ms
+TOTAL             : 1m 15.79s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.101 --seconds 60 --iface ens33
+[*] Running Nmap (alvo 192.168.1.101) ...
+[*] No UPnP identity fields detected.
+[*] Sem identidade IoT/UPnP (fabricante/modelo) — classificação: mobile; SHA-256: apenas p0f + pcap_syn (MSS/opções TCP/TTL/janela). (DHCP/nmap extra ficam só no fingerprint.json para estudo.)
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+[*] Modo mobile: extraindo DHCP/HTTP/TLS/mDNS + nmap (só JSON; SHA só p0f+pcap_syn) ...
+
+=== CANON_STRING ===
+{"p0f":{"extracted":{"server_synack_raw_sig_set":["4:128+0:0:1460:65535,0:mss:df,id+:0","4:128+0:0:1460:8192,0:mss:df,id+:0"]}},"pcap_syn":{"mss":"1460","ttl":"128","window_size":"8192"}}
+
+=== FINGERPRINT_HASH ===
+4d5f53f2b806854f304a076fc351b9cd3b78476a07129b91676364f746568836
+
+[OK] Saved:
+  runs/192.168.1.101_20260325_164510/features_canon.json
+  runs/192.168.1.101_20260325_164510/features_canon.txt
+  runs/192.168.1.101_20260325_164510/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.101_20260325_164510
+
+[OK] Log de pipeline: runs/192.168.1.101_20260325_164510/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 14.73s
+dumpcap_capture   : 1m 00.14s
+nping_probe       : 29.88s
+p0f_native        : 5.5 ms
+tshark_syn_fallback: 417.3 ms
+canon_plus_hash   : 1.1 ms
+TOTAL             : 1m 15.12s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.101 --seconds 60 --iface ens33
+[*] Running Nmap (alvo 192.168.1.101) ...
+[*] No UPnP identity fields detected.
+[*] Sem identidade IoT/UPnP (fabricante/modelo) — classificação: mobile; SHA-256: apenas p0f + pcap_syn (MSS/opções TCP/TTL/janela). (DHCP/nmap extra ficam só no fingerprint.json para estudo.)
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+[*] Modo mobile: extraindo DHCP/HTTP/TLS/mDNS + nmap (só JSON; SHA só p0f+pcap_syn) ...
+
+=== CANON_STRING ===
+{"p0f":{"extracted":{"server_synack_raw_sig_set":["4:128+0:0:1460:65535,0:mss:df,id+:0","4:128+0:0:1460:8192,0:mss:df,id+:0"]}},"pcap_syn":{"mss":"1460","ttl":"128","window_size":"8192"}}
+
+=== FINGERPRINT_HASH ===
+4d5f53f2b806854f304a076fc351b9cd3b78476a07129b91676364f746568836
+
+[OK] Saved:
+  runs/192.168.1.101_20260325_165010/features_canon.json
+  runs/192.168.1.101_20260325_165010/features_canon.txt
+  runs/192.168.1.101_20260325_165010/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.101_20260325_165010
+
+[OK] Log de pipeline: runs/192.168.1.101_20260325_165010/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 15.34s
+dumpcap_capture   : 1m 00.09s
+nping_probe       : 30.05s
+p0f_native        : 5.0 ms
+tshark_syn_fallback: 446.2 ms
+canon_plus_hash   : 1.3 ms
+TOTAL             : 1m 15.88s

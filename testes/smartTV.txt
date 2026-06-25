@@ -1,0 +1,166 @@
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.104 --seconds 60 --iface ens33
+[sudo] password for anna: 
+[*] Running Nmap (alvo 192.168.1.104) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Samsung Electronics","model_name":"QN55Q60TAGXZD"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*20,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"29200"}}
+
+=== FINGERPRINT_HASH ===
+410528d091cb14cea300d79e74348087fc3a1b351584c919650c3a6f24ec18d1
+
+[OK] Saved:
+  runs/192.168.1.104_20260325_160730/features_canon.json
+  runs/192.168.1.104_20260325_160730/features_canon.txt
+  runs/192.168.1.104_20260325_160730/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.104_20260325_160730
+
+[OK] Log de pipeline: runs/192.168.1.104_20260325_160730/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 32.50s
+dumpcap_capture   : 1m 00.40s
+nping_probe       : 29.21s
+p0f_native        : 6.1 ms
+tshark_syn_fallback: 442.5 ms
+canon_plus_hash   : 0.8 ms
+TOTAL             : 1m 33.35s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.104 --seconds 60 --iface ens33
+[*] Running Nmap (alvo 192.168.1.104) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Samsung Electronics","model_name":"QN55Q60TAGXZD"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*20,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"29200"}}
+
+=== FINGERPRINT_HASH ===
+410528d091cb14cea300d79e74348087fc3a1b351584c919650c3a6f24ec18d1
+
+[OK] Saved:
+  runs/192.168.1.104_20260325_163047/features_canon.json
+  runs/192.168.1.104_20260325_163047/features_canon.txt
+  runs/192.168.1.104_20260325_163047/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.104_20260325_163047
+
+[OK] Log de pipeline: runs/192.168.1.104_20260325_163047/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 36.87s
+dumpcap_capture   : 1m 00.45s
+nping_probe       : 29.15s
+p0f_native        : 5.5 ms
+tshark_syn_fallback: 455.1 ms
+canon_plus_hash   : 0.9 ms
+TOTAL             : 1m 37.79s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.104 --seconds 60 --iface ens33
+[*] Running Nmap (alvo 192.168.1.104) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Samsung Electronics","model_name":"QN55Q60TAGXZD"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*20,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"29200"}}
+
+=== FINGERPRINT_HASH ===
+410528d091cb14cea300d79e74348087fc3a1b351584c919650c3a6f24ec18d1
+
+[OK] Saved:
+  runs/192.168.1.104_20260325_163354/features_canon.json
+  runs/192.168.1.104_20260325_163354/features_canon.txt
+  runs/192.168.1.104_20260325_163354/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.104_20260325_163354
+
+[OK] Log de pipeline: runs/192.168.1.104_20260325_163354/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 32.94s
+dumpcap_capture   : 1m 00.45s
+nping_probe       : 29.13s
+p0f_native        : 6.6 ms
+tshark_syn_fallback: 731.7 ms
+canon_plus_hash   : 0.9 ms
+TOTAL             : 1m 34.14s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.104 --seconds 60 --iface ens33
+[*] Running Nmap (alvo 192.168.1.104) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Samsung Electronics","model_name":"QN55Q60TAGXZD"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*20,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"29200"}}
+
+=== FINGERPRINT_HASH ===
+410528d091cb14cea300d79e74348087fc3a1b351584c919650c3a6f24ec18d1
+
+[OK] Saved:
+  runs/192.168.1.104_20260325_163539/features_canon.json
+  runs/192.168.1.104_20260325_163539/features_canon.txt
+  runs/192.168.1.104_20260325_163539/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.104_20260325_163539
+
+[OK] Log de pipeline: runs/192.168.1.104_20260325_163539/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 32.69s
+dumpcap_capture   : 1m 00.44s
+nping_probe       : 29.21s
+p0f_native        : 6.8 ms
+tshark_syn_fallback: 643.8 ms
+canon_plus_hash   : 0.9 ms
+TOTAL             : 1m 33.79s
+
+anna@Ubuntu:~/fingerprint_iot$ sudo python3 iot_id_fingerprint.py runs 192.168.1.104 --seconds 60 --iface ens33
+[*] Running Nmap (alvo 192.168.1.104) ...
+[*] UPnP identity detected ...
+[*] Capturing PCAP with dumpcap (async) ...
+[*] Probing common ports with nping SYN (ports=80,443,22,445,139,3389,8080,8443,9100,5357, count=3) ...
+[*] Running p0f (native) (offline -r) ...
+[*] Extracting SYN/SYN+ACK TCP features from PCAP via tshark ...
+
+=== CANON_STRING ===
+{"nmap":{"manufacturer":"Samsung Electronics","model_name":"QN55Q60TAGXZD"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*20,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"29200"}}
+
+=== FINGERPRINT_HASH ===
+410528d091cb14cea300d79e74348087fc3a1b351584c919650c3a6f24ec18d1
+
+[OK] Saved:
+  runs/192.168.1.104_20260325_164012/features_canon.json
+  runs/192.168.1.104_20260325_164012/features_canon.txt
+  runs/192.168.1.104_20260325_164012/fingerprint_sha256.txt
+
+[OK] Bundle salvo em:
+ /home/anna/fingerprint_iot/runs/192.168.1.104_20260325_164012
+
+[OK] Log de pipeline: runs/192.168.1.104_20260325_164012/fingerprint_pipeline.log
+
+=== TIMING (rodada) ===
+nmap              : 33.61s
+dumpcap_capture   : 1m 00.43s
+nping_probe       : 29.21s
+p0f_native        : 7.1 ms
+tshark_syn_fallback: 522.5 ms
+canon_plus_hash   : 3.0 ms
+TOTAL             : 1m 34.58s
+

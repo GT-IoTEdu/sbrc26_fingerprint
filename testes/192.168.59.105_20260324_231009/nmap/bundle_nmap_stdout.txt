@@ -1,0 +1,40 @@
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2026-03-24 23:10 -03
+Nmap scan report for 192.168.59.105
+Host is up (0.076s latency).
+Not shown: 995 closed tcp ports (reset)
+PORT     STATE SERVICE         VERSION
+8008/tcp open  http?
+8009/tcp open  ssl/castv2      Ninja Sphere Chromecast driver
+8443/tcp open  ssl/https-alt?
+9000/tcp open  ssl/cslistener?
+9080/tcp open  glrpc?
+| fingerprint-strings: 
+|   FourOhFourRequest: 
+|     HTTP/1.0 200 OK
+|     Date: Tue, 24 Mar 2026 23:11:02 -03
+|     Server: NRDP/2020.1.3.1
+|     Connection: close
+|     Cache-Control: no-cache
+|     Content-Length: 9
+|     status=ok
+|   GetRequest: 
+|     HTTP/1.0 200 OK
+|     Date: Tue, 24 Mar 2026 23:10:16 -03
+|     Server: NRDP/2020.1.3.1
+|     Connection: close
+|     Cache-Control: no-cache
+|     Content-Length: 9
+|_    status=ok
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+SF-Port9080-TCP:V=7.94SVN%I=7%D=3/24%Time=69C34409%P=x86_64-pc-linux-gnu%r
+SF:(GetRequest,99,"HTTP/1\.0\x20200\x20OK\r\nDate:\x20Tue,\x2024\x20Mar\x2
+SF:02026\x2023:10:16\x20-03\r\nServer:\x20NRDP/2020\.1\.3\.1\r\nConnection
+SF::\x20close\r\nCache-Control:\x20no-cache\r\nContent-Length:\x209\r\n\r\
+SF:nstatus=ok")%r(FourOhFourRequest,99,"HTTP/1\.0\x20200\x20OK\r\nDate:\x2
+SF:0Tue,\x2024\x20Mar\x202026\x2023:11:02\x20-03\r\nServer:\x20NRDP/2020\.
+SF:1\.3\.1\r\nConnection:\x20close\r\nCache-Control:\x20no-cache\r\nConten
+SF:t-Length:\x209\r\n\r\nstatus=ok");
+MAC Address: F0:B0:40:88:B9:03 (Hunan FN-Link Technology Limited)
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 121.60 seconds

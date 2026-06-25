@@ -1,0 +1,36 @@
+2026-03-25T16:17:58 INFO [fingerprint.pipeline] === run start ip=192.168.59.111 ts=20260325_161758 mode=target canon_policy=stable log_level=DEBUG ===
+2026-03-25T16:17:58 DEBUG [fingerprint.pipeline] args seconds=60 iface=enp0s3 probe_count=3 probe_delay=2.0 wsl_distro=None dumpcap_path=dumpcap
+2026-03-25T16:17:58 INFO [fingerprint.pipeline] STAGE nmap_upnp START
+2026-03-25T16:18:13 INFO [fingerprint.pipeline] STAGE nmap_upnp END elapsed=15.70s server='SHP, UPnP/1.0, Samsung UPnP SDK/1.0' name='[TV]Samsung LED32' manufacturer='Samsung Electronics' model_name='UN32J4303'
+2026-03-25T16:18:13 DEBUG [fingerprint.pipeline] nmap_upnp stdout_chars=536
+2026-03-25T16:18:13 INFO [fingerprint.pipeline] host_kind=iot (iot=UPnP com fabricante ou modelo; mobile=resto)
+2026-03-25T16:18:13 INFO [fingerprint.pipeline] STAGE pcap_capture START duration_s=60 filter_host=192.168.59.111
+2026-03-25T16:18:13 DEBUG [fingerprint.pipeline] dumpcap_cmd=dumpcap -i enp0s3 -w runs/192.168.59.111_20260325_161758/pcaps/capture_192.168.59.111_20260325_161758.pcap -a duration:60 -f host 192.168.59.111
+2026-03-25T16:18:15 INFO [fingerprint.pipeline] STAGE nping_probe cmd=nping --tcp -p 80,443,22,445,139,3389,8080,8443,9100,5357 --flags syn --count 3 192.168.59.111
+2026-03-25T16:18:45 DEBUG [fingerprint.pipeline] nping rc_ok stdout_chars=6655 stderr_chars=0
+2026-03-25T16:19:14 INFO [fingerprint.pipeline] STAGE pcap_capture END elapsed=1m 00.20s pcap_path=runs/192.168.59.111_20260325_161758/pcaps/capture_192.168.59.111_20260325_161758.pcap size_bytes=44792
+2026-03-25T16:19:14 INFO [fingerprint.pipeline] STAGE p0f START
+2026-03-25T16:19:14 DEBUG [fingerprint.pipeline] p0f_cmd=p0f -r /home/carregando/fullprint/runs/192.168.59.111_20260325_161758/pcaps/capture_192.168.59.111_20260325_161758.pcap
+2026-03-25T16:19:14 INFO [fingerprint.pipeline] STAGE p0f parse summary processed_packets=94 blocks_count=38 warnings=0
+2026-03-25T16:19:14 INFO [fingerprint.p0f_extract] extract_p0f_sets target=192.168.59.111 client_syn=1 server_synack=1 client_mtu=1 server_mtu=1
+2026-03-25T16:19:14 DEBUG [fingerprint.p0f_extract] extract_p0f_sets client_syn_raw_sig_set=['4:64+0:0:1460:mss*10,6:mss,sok,ts,nop,ws:df,id+:0']
+2026-03-25T16:19:14 DEBUG [fingerprint.p0f_extract] extract_p0f_sets server_synack_raw_sig_set=['4:64+0:0:1460:mss*10,0:mss:df:0']
+2026-03-25T16:19:14 INFO [fingerprint.pipeline] STAGE tshark_syn_fallback START
+2026-03-25T16:19:14 INFO [fingerprint.tshark] tshark start pcap=runs/192.168.59.111_20260325_161758/pcaps/capture_192.168.59.111_20260325_161758.pcap size_bytes=44792 ip=192.168.59.111
+2026-03-25T16:19:14 INFO [fingerprint.tshark] tshark try_filter filter=ip.src==192.168.59.111 && tcp.flags.syn==1 && tcp.flags.ack==1 matching_lines=3 first_row='64\t14600\t1460\t\t\t'
+2026-03-25T16:19:14 DEBUG [fingerprint.tshark] tshark parsed fields ttl=64 win=14600 mss=1460 ws=None opts=None
+2026-03-25T16:19:14 INFO [fingerprint.tshark] tshark done chosen_filter=ip.src==192.168.59.111 && tcp.flags.syn==1 && tcp.flags.ack==1 ttl=64 window_size=14600 mss=1460 ws=None options_order=None
+2026-03-25T16:19:14 INFO [fingerprint.pipeline] STAGE tshark_syn_fallback END elapsed=544.7 ms pcap_syn={"chosen_filter": "ip.src==192.168.59.111 && tcp.flags.syn==1 && tcp.flags.ack==1", "filters_tried": ["ip.src==192.168.59.111 && tcp.flags.syn==1 && tcp.flags.ack==1"], "mss": "1460", "options_order": null, "sack_perm": null, "source": "tshark_syn_fallback", "ts_present": "0", "tshark_stderr": "Running as user \"root\" and group \"root\". This could be dangerous.\nRunning as user \"root\" and group \"root\". This could be dangerous.", "ttl": "64", "window_size": "14600", "ws": null}
+2026-03-25T16:19:14 INFO [fingerprint.pipeline] STAGE bundle_json written path=runs/192.168.59.111_20260325_161758/fingerprint.json
+2026-03-25T16:19:14 INFO [fingerprint.pipeline] STAGE canon_hash START policy=stable
+2026-03-25T16:19:14 INFO [fingerprint.canon] build_canon start policy=stable host_kind=iot top_level_keys=['meta', 'nmap', 'p0f', 'paths', 'pcap_syn']
+2026-03-25T16:19:14 DEBUG [fingerprint.canon] build_canon iot nmap fields_present server=True name=True mfg=True model=True
+2026-03-25T16:19:14 INFO [fingerprint.canon] build_canon p0f branch=server_synack count=1
+2026-03-25T16:19:14 INFO [fingerprint.canon] build_canon pcap_syn host_kind=iot keys=['mss', 'ttl', 'window_size']
+2026-03-25T16:19:14 INFO [fingerprint.canon] build_canon result_sections=['nmap', 'p0f', 'pcap_syn']
+2026-03-25T16:19:14 DEBUG [fingerprint.canon] build_canon section nmap = {"manufacturer": "Samsung Electronics", "model_name": "UN32J4303"}
+2026-03-25T16:19:14 DEBUG [fingerprint.canon] build_canon section p0f = {"extracted": {"server_synack_raw_sig_set": ["4:64+0:0:1460:mss*10,0:mss:df:0"]}}
+2026-03-25T16:19:14 DEBUG [fingerprint.canon] build_canon section pcap_syn = {"mss": "1460", "ttl": "64", "window_size": "14600"}
+2026-03-25T16:19:14 INFO [fingerprint.pipeline] STAGE canon_hash OK canon_str_len=217 sha256=1f4e8c4af2be567b929cf5b7409c57d648ea062262eeab566e11e32c1b437e94
+2026-03-25T16:19:14 DEBUG [fingerprint.pipeline] CANON_STRING={"nmap":{"manufacturer":"Samsung Electronics","model_name":"UN32J4303"},"p0f":{"extracted":{"server_synack_raw_sig_set":["4:64+0:0:1460:mss*10,0:mss:df:0"]}},"pcap_syn":{"mss":"1460","ttl":"64","window_size":"14600"}}
+2026-03-25T16:19:14 INFO [fingerprint.pipeline] === run end total=1m 16.48s tmarks={'nmap': '15.70s', 'nping_probe': '29.15s', 'dumpcap_capture': '1m 00.20s', 'p0f_native': '18.1 ms', 'tshark_syn_fallback': '544.7 ms', 'canon_plus_hash': '0.7 ms'} log_file=runs/192.168.59.111_20260325_161758/fingerprint_pipeline.log ===
