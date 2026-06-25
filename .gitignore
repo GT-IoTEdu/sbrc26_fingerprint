@@ -1,0 +1,20 @@
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Saidas de execucao geradas pelas ferramentas
+runs/
+scan_*/
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Memoria de sessao local (nao versionar)
+.remember/
+
+# Artefatos de SO / editor
+.DS_Store
+*.swp

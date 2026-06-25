@@ -54,17 +54,22 @@ The figure below illustrates the four main phases of the pipeline: attribute col
 sbrc26_fingerprint/
 ├── iot_id_fingerprint.py     # Main fingerprinting pipeline
 ├── iot_net_scanner.py        # Network discovery utility
+├── upnp_discovery.py         # Shared SSDP/UPnP discovery helpers
 ├── canonicalize_features.py  # Feature canonicalization module
 ├── fingerprint_hash.py       # SHA-256 hashing module
 ├── fingerprint_subnet.sh     # Batch script for subnet-wide fingerprinting
 ├── requirements.txt          # Python dependencies
 ├── Dockerfile                # Container image definition
 ├── docker-compose.yml        # Docker Compose configuration (host networking + capabilities)
-├── docs/                     # Documentation assets (e.g., workflow diagram)
+├── docs/                     # Documentation (ARCHITECTURE.md, USAGE.md, diagrams)
 ├── testes/                   # Test scripts and validation data
 ├── runs/                     # Output directory (created at runtime)
 └── README.md                 # This file
 ```
+
+> **Deep dives:** see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the pipeline
+> design and the fingerprint formula, and [`docs/USAGE.md`](docs/USAGE.md) for every
+> command-line option with examples.
 
 ---
 
