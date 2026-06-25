@@ -52,18 +52,27 @@ The figure below illustrates the four main phases of the pipeline: attribute col
 
 ```
 sbrc26_fingerprint/
-├── iot_id_fingerprint.py     # Main fingerprinting pipeline
-├── iot_net_scanner.py        # Network discovery utility
-├── canonicalize_features.py  # Feature canonicalization module
-├── fingerprint_hash.py       # SHA-256 hashing module
-├── fingerprint_subnet.sh     # Batch script for subnet-wide fingerprinting
-├── requirements.txt          # Python dependencies
-├── Dockerfile                # Container image definition
-├── docker-compose.yml        # Docker Compose configuration (host networking + capabilities)
-├── docs/                     # Documentation assets (e.g., workflow diagram)
-├── testes/                   # Test scripts and validation data
-├── runs/                     # Output directory (created at runtime)
-└── README.md                 # This file
+├── iot_id_fingerprint.py      # Backward-compatible CLI wrapper for the pipeline
+├── iot_net_scanner.py         # Backward-compatible CLI wrapper for network discovery
+├── canonicalize_features.py   # Backward-compatible CLI wrapper for canonicalization
+├── fingerprint_hash.py        # Backward-compatible CLI wrapper for offline hashing
+├── iot_fingerprint/           # Internal package with cohesive implementation modules
+│   ├── canonical.py           # Canonical feature policy and deterministic serialization
+│   ├── hashing.py             # Hash computation and offline hash CLI logic
+│   ├── pipeline.py            # Main orchestration for target/network fingerprinting
+│   ├── upnp.py                # Shared SSDP/UPnP/Nmap/ARP discovery helpers
+│   ├── p0f.py                 # p0f raw parser and stable set extraction
+│   ├── tshark_features.py     # TCP SYN/SYN+ACK and passive tshark extraction
+│   ├── mobile.py              # Mobile-only evidence outside the canonical hash
+│   └── runtime.py             # Process, logging, filesystem and formatting helpers
+├── fingerprint_subnet.sh      # Batch script for subnet-wide fingerprinting
+├── requirements.txt           # Python dependencies
+├── Dockerfile                 # Container image definition
+├── docker-compose.yml         # Docker Compose configuration (host networking + capabilities)
+├── docs/                      # Documentation assets (e.g., workflow diagram)
+├── testes/                    # Test scripts and validation data
+├── runs/                      # Output directory (created at runtime)
+└── README.md                  # This file
 ```
 
 ---
