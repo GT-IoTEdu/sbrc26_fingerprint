@@ -28,7 +28,7 @@ def nmap_broadcast() -> dict:
     """broadcast-upnp-info para descobrir varios dispositivos de uma vez."""
     try:
         out = subprocess.check_output(["nmap", "-T4", "--script", "broadcast-upnp-info"],
-                                      text=True, stderr=subprocess.DEVNULL)
+                                      text=True, stderr=subprocess.DEVNULL, timeout=180)
     except Exception:
         return {}
 
@@ -53,7 +53,8 @@ def arp_table() -> dict:
     """Mapeia IP -> MAC a partir de `ip neighbor`."""
     table: dict = {}
     try:
-        out = subprocess.run(["ip", "neighbor"], capture_output=True, text=True).stdout
+        out = subprocess.run(["ip", "neighbor"], capture_output=True, text=True,
+                             timeout=15).stdout
     except Exception:
         return table
     for line in out.splitlines():

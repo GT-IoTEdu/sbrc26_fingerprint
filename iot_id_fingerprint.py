@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import ipaddress
 import json
 import logging
 import re
@@ -39,6 +40,14 @@ from upnp_discovery import collect_upnp_identity, ssdp_probe, ssdp_to_jsonable
 DEFAULT_PROBE_PORTS = [80, 443, 22, 445, 139, 3389, 8080, 8443, 9100, 5357]
 MOBILE_NMAP_PORTS = "22,5555,8080,554,62078,843,5228"
 
+# Timeout-guarda padrao para subprocessos: evita travamento indefinido caso uma
+# ferramenta externa (tshark, p0f, ip, nping) nao retorne.
+DEFAULT_CMD_TIMEOUT = 300.0
+
+# Nomes de interface validos: letras, digitos e ._:@- (sem comecar por '-', o que
+# evita injecao de argumento em ferramentas como dumpcap).
+_IFACE_RE = re.compile(r"^[A-Za-z0-9_.@][A-Za-z0-9_.:@-]{0,63}$")
+
 log = logging.getLogger("fingerprint")
 
 
@@ -52,13 +61,46 @@ def _decode(data: bytes) -> str:
         return data.decode("latin-1", errors="replace")
 
 
-def run(cmd: list[str], check: bool = False, timeout: float | None = None) -> tuple[int, str, str]:
-    """Executa um comando e retorna (returncode, stdout, stderr) ja decodificados."""
-    p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+def run(cmd: list[str], check: bool = False,
+        timeout: float | None = DEFAULT_CMD_TIMEOUT) -> tuple[int, str, str]:
+    """Executa um comando e retorna (returncode, stdout, stderr) ja decodificados.
+
+    Todo subprocesso tem um timeout-guarda (DEFAULT_CMD_TIMEOUT) por defeito. Ao
+    expirar, devolve returncode 124 (em vez de travar), que os chamadores ja
+    tratam como falha (rc != 0). Use ``timeout=None`` para desativar o limite.
+    """
+    try:
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
+    except subprocess.TimeoutExpired as exc:
+        out, err = _decode(exc.stdout or b""), _decode(exc.stderr or b"")
+        msg = f"Comando expirou ({timeout}s): {' '.join(cmd)}"
+        log.warning(msg)
+        if check:
+            raise RuntimeError(msg) from exc
+        return 124, out, err or msg
     out, err = _decode(p.stdout or b""), _decode(p.stderr or b"")
     if check and p.returncode != 0:
         raise RuntimeError(f"Comando falhou ({p.returncode}): {' '.join(cmd)}\n{err}")
     return p.returncode, out, err
+
+
+def valid_ip(addr: str) -> str:
+    """Valida um IP (v4/v6); aborta se invalido. Evita alvos malformados ou
+    valores que iniciem por '-' (injecao de argumento em nmap/nping/dumpcap)."""
+    candidate = (addr or "").strip()
+    try:
+        ipaddress.ip_address(candidate)
+    except ValueError:
+        sys.exit(f"[!] IP alvo invalido: {addr!r}")
+    return candidate
+
+
+def valid_iface(name: str) -> str:
+    """Valida o nome da interface de captura; aborta se invalido."""
+    candidate = (name or "").strip()
+    if not _IFACE_RE.match(candidate):
+        sys.exit(f"[!] Interface invalida: {name!r}")
+    return candidate
 
 
 def tshark_rows(pcap: Path, dfilter: str, *fields: str) -> list[list[str]]:
@@ -285,7 +327,14 @@ def capture_and_probe(pcap_path: Path, args: argparse.Namespace, target_ip: str)
     print(f"[*] Sonda nping SYN (ports={ports_csv}, count={args.probe_count}) ...")
     run(["nping", "--tcp", "-p", ports_csv, "--flags", "syn",
          "--count", str(args.probe_count), target_ip])
-    cap.communicate()
+    # dumpcap encerra sozinho via `-a duration`; o timeout aqui e so um guarda
+    # contra travamento, com margem sobre a duracao pedida.
+    try:
+        cap.communicate(timeout=args.seconds + 30)
+    except subprocess.TimeoutExpired:
+        cap.kill()
+        cap.communicate()
+        log.warning("dumpcap nao encerrou no prazo; processo terminado.")
 
 
 def run_single_fingerprint(run_dir: Path, target_ip: str, ts: str, args: argparse.Namespace) -> dict:
@@ -448,6 +497,7 @@ def main() -> None:
         if not args.iface:
             sys.exit("[!] Nao foi possivel detetar a interface; use --iface.")
         print(f"[*] Interface auto-detetada: {args.iface}")
+    args.iface = valid_iface(args.iface)
     try:
         args.probe_ports = [int(p) for p in str(args.probe_ports).split(",") if p.strip()]
     except ValueError:
@@ -459,6 +509,7 @@ def main() -> None:
     if args.mode == "target":
         if not args.ip:
             sys.exit("[!] Modo target: indique o IP, ex: iot_id_fingerprint.py runs 192.168.1.10")
+        args.ip = valid_ip(args.ip)
         run_single_fingerprint(Path(args.outroot) / f"{args.ip}_{ts}", args.ip, ts, args)
         return
 

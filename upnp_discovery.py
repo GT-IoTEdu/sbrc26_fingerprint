@@ -23,11 +23,16 @@ from urllib.parse import urlparse
 import requests
 
 # UPnP XML vem de dispositivos nao confiaveis da rede: defusedxml protege contra
-# XXE / billion-laughs. Se nao estiver instalado, cai no parser da stdlib.
+# XXE / billion-laughs e e obrigatorio (declarado em requirements.txt). Nao ha
+# fallback para xml.etree: cair na stdlib reintroduziria a vulnerabilidade de
+# forma silenciosa.
 try:
     from defusedxml.ElementTree import fromstring as xml_fromstring
-except ImportError:  # pragma: no cover
-    from xml.etree.ElementTree import fromstring as xml_fromstring
+except ImportError as exc:  # pragma: no cover
+    raise ImportError(
+        "defusedxml e obrigatorio para parsear XML UPnP de dispositivos nao "
+        "confiaveis. Instale com 'pip install defusedxml' (veja requirements.txt)."
+    ) from exc
 
 SSDP_ADDR = ("239.255.255.250", 1900)
 SSDP_TIMEOUT = 2.0
@@ -112,7 +117,7 @@ def nmap_upnp_scan(target: str, sudo: bool = True) -> tuple[dict, str]:
     """
     cmd = (["sudo"] if sudo else []) + ["nmap", "-sV", "-Pn", "--script", "upnp-info", target]
     try:
-        out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
+        out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL, timeout=180)
     except Exception:
         return {}, ""
 
