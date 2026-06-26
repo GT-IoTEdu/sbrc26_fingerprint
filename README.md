@@ -527,6 +527,26 @@ The tool generates TCP SYN traffic, captures network packets (PCAP), and may tri
 - Ensure compliance with institutional and legal policies regarding network monitoring.
 - Treat captured PCAP files as potentially sensitive data.
 
+### Built-in safeguards
+
+The tools apply a few protections by default:
+
+- **Defensive XML parsing (mandatory).** UPnP device-description XML comes from
+  untrusted network devices, so it is parsed with `defusedxml` (protection against
+  XXE and billion-laughs). There is no fallback to the standard-library parser: if
+  `defusedxml` is missing, the tools fail with a clear error instead of silently
+  falling back to a vulnerable parser. Install it via `pip install -r requirements.txt`.
+- **Input validation.** The target IP is validated with `ipaddress` and the
+  interface name against a restricted character set before being passed to
+  `nmap`/`nping`/`dumpcap`, rejecting malformed values and blocking argument
+  injection (e.g., values starting with `-`).
+- **Subprocess timeouts.** Every call to an external tool has a guard timeout, so
+  the pipeline never hangs indefinitely if a tool fails to return.
+
+These reduce the code and dependency attack surface, but the dominant risk remains
+operational: the pipeline runs privileged network tools, so use it only on
+authorized networks.
+
 ---
 
 ## LICENSE

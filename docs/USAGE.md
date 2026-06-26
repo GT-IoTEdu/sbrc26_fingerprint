@@ -88,6 +88,28 @@ python3 canonicalize_features.py runs/192.168.1.10_*/fingerprint.json --policy r
 python3 fingerprint_hash.py runs/192.168.1.10_*/fingerprint.json --outdir /tmp/fp
 ```
 
+## Segurança e robustez
+
+As ferramentas aplicam algumas proteções por defeito:
+
+- **Parsing XML defensivo (obrigatório).** O XML de descrição UPnP vem de
+  dispositivos não confiáveis da rede, então é processado com `defusedxml`
+  (proteção contra XXE e *billion-laughs*). Não há fallback para o parser da
+  biblioteca padrão: se `defusedxml` não estiver instalado, as ferramentas falham
+  com erro claro em vez de cair, silenciosamente, num parser vulnerável. Instale
+  com `pip install -r requirements.txt`.
+- **Validação de entrada.** O IP-alvo é validado com `ipaddress` e o nome da
+  interface por um conjunto restrito de caracteres antes de serem passados a
+  `nmap`/`nping`/`dumpcap`. Isso rejeita valores malformados e bloqueia injeção de
+  argumento (por exemplo, valores iniciados por `-`).
+- **Timeouts em subprocessos.** Todas as chamadas a ferramentas externas têm um
+  timeout-guarda: o pipeline não trava indefinidamente se uma ferramenta não
+  retornar (a etapa expira e é registrada no log).
+
+> Mesmo com essas proteções, o maior risco continua operacional: o pipeline usa
+> `nmap`, `nping`, `dumpcap`, `tshark` e `p0f` com privilégios elevados. Rode
+> apenas em redes autorizadas (veja a seção de ética no `README.md`).
+
 ## Docker
 
 ```bash
